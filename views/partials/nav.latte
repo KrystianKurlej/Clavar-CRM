@@ -1,12 +1,13 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/">CRM</a>
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <img src="/img/logo.svg" alt="Calvar" style="height: 24px;">
+    </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a n:class="'nav-link', $presenterPath === '/' ? 'active'" href="/">Home</a></li>
         <li class="nav-item"><a n:class="'nav-link', $presenterPath === '/projects' ? 'active'" href="/projects">Projekty</a></li>
       </ul>
       <div class="d-flex">
@@ -22,6 +23,7 @@
     </div>
   </div>
 </nav>
+
 <script>
   async function logoutSubmit(form){
     try {

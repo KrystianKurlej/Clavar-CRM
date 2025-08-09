@@ -1,8 +1,11 @@
 {layout 'layout.latte'}
+
 {block title}Projekty{/block}
+
 {block content}
-<h1 class="mb-3">Projekty</h1>
-<form id="createForm" class="row g-2 mb-3" onsubmit="return createProject(this)">
+{include 'partials/nav.latte'}
+
+{* <form id="createForm" class="row g-2 mb-3" onsubmit="return createProject(this)">
   <div class="col-auto">
     <input class="form-control" name="name" placeholder="Nazwa projektu" required />
   </div>
@@ -11,60 +14,11 @@
     <button class="btn btn-primary" type="submit">Dodaj</button>
   </div>
   <div class="col-12"><small id="err" class="text-danger"></small></div>
-</form>
+</form> *}
 
-<ul id="projects" class="list-group">
+{* <ul id="projects" class="list-group">
   <li class="list-group-item text-muted" id="empty">Ładowanie…</li>
-</ul>
+</ul> *}
 
-<script n:syntax="off">
-  async function api(path, opts = {}){
-    const res = await fetch(path, Object.assign({ credentials:'include' }, opts));
-    if (res.status === 204) return null; try { return await res.json(); } catch(e){ return null; }
-  }
-  async function csrf(){ const d = await api('/api/csrf'); return d?.csrf; }
-
-  function renderList(items){
-    const ul = document.getElementById('projects');
-    ul.innerHTML = '';
-    if (!items || items.length === 0) { ul.innerHTML = '<li class="list-group-item text-muted">Brak projektów</li>'; return; }
-    for(const p of items){
-      const li = document.createElement('li');
-      li.className = 'list-group-item d-flex justify-content-between align-items-center';
-      li.innerHTML = `
-        <span>${p.name}</span>
-        <span>
-          <button data-act="archive" data-id="${p.id}" class="btn btn-sm btn-outline-secondary me-2">Archiwizuj</button>
-          <button data-act="delete" data-id="${p.id}" class="btn btn-sm btn-outline-danger">Usuń</button>
-        </span>`;
-      ul.appendChild(li);
-    }
-  }
-
-  async function load(){
-    const me = await api('/api/me'); if (!me || !me.ok) { location.href = '/login'; return; }
-    const res = await api('/api/projects'); renderList(res?.projects || []);
-  }
-
-  async function createProject(form){
-    document.getElementById('err').textContent = '';
-    const data = Object.fromEntries(new FormData(form));
-    const token = await csrf();
-    const res = await api('/api/projects', { method:'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.name, _csrf: token }) });
-    if (!res || !res.ok) { document.getElementById('err').textContent = res?.error || 'Błąd'; return false; }
-    form.reset();
-    load();
-    return false;
-  }
-
-  document.getElementById('projects').addEventListener('click', async (e) => {
-    const btn = e.target.closest('button'); if (!btn) return;
-    const id = btn.getAttribute('data-id'); const act = btn.getAttribute('data-act'); const token = await csrf();
-    if (act === 'archive') { await api(`/api/projects/${id}`, { method:'PUT', headers:{ 'Content-Type': 'application/json' }, body: JSON.stringify({ archived: 1, _csrf: token }) }); }
-    else if (act === 'delete') { await api(`/api/projects/${id}`, { method:'DELETE', headers:{ 'Content-Type': 'application/json' }, body: JSON.stringify({ _csrf: token }) }); }
-    load();
-  });
-
-  load();
-</script>
+{include 'partials/footer.latte'}
 {/block}
