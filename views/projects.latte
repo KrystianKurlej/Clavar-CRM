@@ -6,8 +6,9 @@
 {include 'partials/nav.latte'}
 
 <header class="container my-5">
-    <form id="createForm" class="d-flex align-items-center gap-2" onsubmit="return createProject(this)">
+    <form id="createProjectForm" class="form d-flex align-items-center gap-2" method="POST" action="/ax_projects">
       <input class="form-control w-100" name="name" placeholder="Nazwa projektu" required />
+      <input type="hidden" name="action" value="create_project" />
       <input type="hidden" name="_csrf" value="{csrfToken()}" />
       
       <button class="btn btn-primary flex-shrink-0" type="submit">Dodaj nowy projekt</button>
