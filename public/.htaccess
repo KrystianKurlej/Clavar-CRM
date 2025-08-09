@@ -1,18 +1,13 @@
-# SPA-first: serve index.html, route /api/* to PHP
 Options -Indexes
-DirectoryIndex index.html index.php
+DirectoryIndex index.php index.html
 <IfModule mod_rewrite.c>
 RewriteEngine On
-
-# API goes to PHP router
-RewriteCond %{REQUEST_URI} ^/api/
-RewriteRule ^ index.php [QSA,L]
 
 # Allow existing files/dirs
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# Fallback to SPA index.html for any other path
-RewriteRule ^ index.html [L]
+# Everything else goes to PHP router
+RewriteRule ^ index.php [QSA,L]
 </IfModule>

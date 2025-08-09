@@ -1,9 +1,14 @@
 <?php
 
-function ensure_dir(string $path): void {
-    if (!is_dir($path)) {
-        mkdir($path, 0775, true);
+function ensure_dir(string $path): bool {
+    if (is_dir($path)) {
+        return true;
     }
+    // Suppress warnings and check explicitly
+    if (@mkdir($path, 0755, true)) {
+        return true;
+    }
+    return is_dir($path);
 }
 
 function redirect(string $path): void {
@@ -11,10 +16,7 @@ function redirect(string $path): void {
     exit;
 }
 
-function view(string $template, array $data = []): void {
-    extract($data);
-    include __DIR__ . '/../views/' . $template . '.php';
-}
+// no-op: legacy view() removed after switching to Latte
 
 function h(?string $value): string {
     return htmlspecialchars($value ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

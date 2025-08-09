@@ -2,6 +2,8 @@
 declare(strict_types=1);
 
 // Bootstrap
+$autoload = __DIR__ . '/../vendor/autoload.php';
+if (is_file($autoload)) { require $autoload; }
 $config = require __DIR__ . '/../bootstrap/config.php';
 require __DIR__ . '/../app/Support.php';
 require __DIR__ . '/../app/Auth.php';
@@ -20,7 +22,7 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 // CORS (for API)
 handle_cors($config);
 
-// API routes (JSON) only
+// API routes (JSON)
 if (str_starts_with($path, '/api/')) {
     if ($path === '/api/csrf' && $method === 'GET') {
         json(['csrf' => $auth->csrfToken()]);
@@ -157,6 +159,50 @@ if (str_starts_with($path, '/api/')) {
     }
 }
 
-// 404 for non-API here (static files handled by web server/.htaccess)
+// Server-side routes (pages)
+use Latte\Engine;
+$latte = new Engine();
+// Choose writable cache dir for Latte
+$latteCache = rtrim($config['data_dir'] ?? (__DIR__ . '/../data'), '/') . '/_latte';
+if (!ensure_dir($latteCache)) {
+    $tmp = sys_get_temp_dir() . '/calvar-crm/_latte';
+    ensure_dir($tmp);
+    $latteCache = $tmp;
+}
+$latte->setTempDirectory($latteCache);
+$views = __DIR__ . '/../views';
+
+function render(Latte\Engine $latte, string $template, array $params = []): void {
+    global $views, $config, $auth;
+    $params['config'] = $config;
+    $params['me'] = $auth->user();
+    $params['presenterPath'] = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
+    // CSRF helper for forms rendered server-side
+    if (!function_exists('csrfToken')) {
+        function csrfToken(): string { global $auth; return $auth->csrfToken(); }
+    }
+    $latte->render($views . '/' . $template . '.latte', $params);
+}
+
+// Home -> redirect to /projects or /login
+if ($path === '/' || $path === '/index.html') {
+    if ($auth->isLoggedIn()) { redirect('/projects'); }
+    redirect('/login');
+}
+
+// Login page
+if ($path === '/login') {
+    if ($auth->isLoggedIn()) { redirect('/projects'); }
+    render($latte, 'login');
+    exit;
+}
+
+// Projects page (auth required)
+if ($path === '/projects') {
+    if (!$auth->isLoggedIn()) { redirect('/login'); }
+    render($latte, 'projects');
+    exit;
+}
+
 http_response_code(404);
 echo 'Not Found';

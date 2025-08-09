@@ -3,7 +3,7 @@
 
 # PHP
 /vendor/
-/composer.lock
+# keep composer.lock committed (do not ignore)
 config.local.php
 
 # Data
