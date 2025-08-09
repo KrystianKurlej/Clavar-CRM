@@ -1,0 +1,34 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
+  <div class="container-fluid">
+  <a class="navbar-brand" href="/">CRM</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="/projects.html">Projekty</a></li>
+        <li class="nav-item"><a class="nav-link disabled" aria-disabled="true" href="#">Czas (wkrótce)</a></li>
+      </ul>
+      <div class="d-flex">
+        <button id="logoutBtn" class="btn btn-sm btn-outline-secondary" type="button">Wyloguj</button>
+      </div>
+    </div>
+  </div>
+</nav>
+<script>
+  (function(){
+    const btn = document.getElementById('logoutBtn');
+    if (!btn) return;
+    async function api(path, opts = {}){ const res = await fetch(path, Object.assign({ credentials:'include' }, opts)); try { return await res.json(); } catch(e){ return null; } }
+    async function csrf(){ const d = await api('/api/csrf'); return d?.csrf; }
+    btn.addEventListener('click', async () => {
+      try {
+        const token = await csrf();
+        await api('/api/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _csrf: token }) });
+      } finally {
+        location.href = '/login.html';
+      }
+    });
+  })();
+</script>

@@ -20,54 +20,13 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 // CORS (for API)
 handle_cors($config);
 
-// Routes
-if ($path === '/' && $auth->isLoggedIn()) {
-    view('dashboard', ['auth' => $auth]);
-    return;
-}
-
-if ($path === '/' && !$auth->isLoggedIn()) {
-    redirect('/login');
-}
-
-if ($path === '/login') {
-    if ($method === 'GET') {
-        view('login', ['auth' => $auth, 'error' => null]);
-        return;
-    }
-    if ($method === 'POST') {
-        $auth->checkCsrf();
-        $email = trim((string)post('email'));
-        $password = (string)post('password');
-        if ($auth->login($email, $password)) {
-            redirect('/');
-        } else {
-            http_response_code(401);
-            view('login', ['auth' => $auth, 'error' => 'Nieprawidłowy e-mail lub hasło.']);
-        }
-        return;
-    }
-}
-
-if ($path === '/logout') {
-    if ($method === 'POST') {
-        $auth->checkCsrf();
-        $auth->logout();
-        redirect('/login');
-    } else {
-        http_response_code(405);
-        echo 'Method Not Allowed';
-    }
-    return;
-}
-
-// API routes (JSON)
+// API routes (JSON) only
 if (str_starts_with($path, '/api/')) {
     if ($path === '/api/csrf' && $method === 'GET') {
         json(['csrf' => $auth->csrfToken()]);
     }
+
     if ($path === '/api/login' && $method === 'POST') {
-        // JSON body
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
         $_POST['_csrf'] = $input['_csrf'] ?? '';
         $auth->checkCsrf();
@@ -78,6 +37,7 @@ if (str_starts_with($path, '/api/')) {
         }
         json(['ok' => false, 'error' => 'Unauthorized'], 401);
     }
+
     if ($path === '/api/logout' && $method === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
         $_POST['_csrf'] = $input['_csrf'] ?? '';
@@ -85,14 +45,118 @@ if (str_starts_with($path, '/api/')) {
         $auth->logout();
         json(['ok' => true]);
     }
+
     if ($path === '/api/me' && $method === 'GET') {
         if (!$auth->isLoggedIn()) {
             json(['ok' => false], 401);
         }
         json(['ok' => true, 'user' => $auth->user()]);
     }
+
+    if ($path === '/api/seed-user' && $method === 'POST') {
+        $seed = $config['seed'] ?? ['enabled' => false];
+        if (!($seed['enabled'] ?? false)) {
+            json(['ok' => false, 'error' => 'Disabled'], 403);
+        }
+        $lockFile = ($config['data_dir'] ?? __DIR__ . '/../data') . '/.seed.lock';
+        if (($seed['once'] ?? true) && is_file($lockFile)) {
+            json(['ok' => false, 'error' => 'Locked'], 403);
+        }
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $secret = (string)($input['secret'] ?? '');
+        if (!$secret || !hash_equals((string)($seed['secret'] ?? ''), $secret)) {
+            json(['ok' => false, 'error' => 'Forbidden'], 403);
+        }
+        $email = trim((string)($input['email'] ?? ''));
+        $password = (string)($input['password'] ?? '');
+        if (!$email || !$password) {
+            json(['ok' => false, 'error' => 'Missing email or password'], 400);
+        }
+        $usersDir = $config['users_dir'];
+        ensure_dir($usersDir);
+        $dataDir = $config['data_dir'];
+        ensure_dir($dataDir);
+        $key = strtolower(trim($email));
+        $key = preg_replace('/[^a-z0-9\-_.@]+/i', '_', $key);
+        $userFile = $usersDir . '/' . $key . '.json';
+        if (file_exists($userFile)) {
+            json(['ok' => false, 'error' => 'User exists'], 409);
+        }
+        $dbPath = $dataDir . '/' . $key . '.sqlite';
+        $pdo = new PDO('sqlite:' . $dbPath);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->exec('PRAGMA journal_mode = WAL;');
+        $pdo->exec('PRAGMA foreign_keys = ON;');
+        $user = [
+            'email' => $email,
+            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+            'db_path' => $dbPath,
+            'created_at' => date('c'),
+        ];
+        file_put_contents($userFile, json_encode($user, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        if ($seed['once'] ?? true) {
+            file_put_contents($lockFile, (string)time());
+        }
+        json(['ok' => true]);
+    }
+
+    // Projects API (auth required)
+    if (str_starts_with($path, '/api/projects')) {
+        if (!$auth->isLoggedIn()) { json(['ok' => false, 'error' => 'Unauthorized'], 401); }
+        $user = $auth->user();
+        $pdo = DB::connect($user['db_path']);
+        DB::ensureSchema($pdo);
+
+        // GET /api/projects -> list non-archived
+        if ($path === '/api/projects' && $method === 'GET') {
+            $stmt = $pdo->query('SELECT id, name, archived, created_at FROM projects WHERE archived = 0 ORDER BY created_at DESC');
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            json(['ok' => true, 'projects' => $rows]);
+        }
+
+        // POST /api/projects -> create { name }
+        if ($path === '/api/projects' && $method === 'POST') {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $_POST['_csrf'] = $input['_csrf'] ?? '';
+            $auth->checkCsrf();
+            $name = trim((string)($input['name'] ?? ''));
+            if ($name === '') { json(['ok' => false, 'error' => 'Name required'], 422); }
+            $stmt = $pdo->prepare('INSERT INTO projects(name) VALUES(:name)');
+            $stmt->execute([':name' => $name]);
+            $id = (int)$pdo->lastInsertId();
+            json(['ok' => true, 'id' => $id]);
+        }
+
+        // PUT /api/projects/{id} -> update name or archived
+        if (preg_match('#^/api/projects/(\d+)$#', $path, $m) && $method === 'PUT') {
+            $id = (int)$m[1];
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $_POST['_csrf'] = $input['_csrf'] ?? '';
+            $auth->checkCsrf();
+            $fields = [];
+            $params = [':id' => $id];
+            if (array_key_exists('name', $input)) { $fields[] = 'name = :name'; $params[':name'] = trim((string)$input['name']); }
+            if (array_key_exists('archived', $input)) { $fields[] = 'archived = :archived'; $params[':archived'] = (int)!!$input['archived']; }
+            if (!$fields) { json(['ok' => false, 'error' => 'No changes'], 400); }
+            $sql = 'UPDATE projects SET ' . implode(', ', $fields) . ' WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            json(['ok' => true]);
+        }
+
+        // DELETE /api/projects/{id}
+        if (preg_match('#^/api/projects/(\d+)$#', $path, $m) && $method === 'DELETE') {
+            $id = (int)$m[1];
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $_POST['_csrf'] = $input['_csrf'] ?? '';
+            $auth->checkCsrf();
+            $stmt = $pdo->prepare('DELETE FROM projects WHERE id = :id');
+            $stmt->execute([':id' => $id]);
+            json(['ok' => true]);
+        }
+    }
 }
 
-// 404
+// 404 for non-API here (static files handled by web server/.htaccess)
 http_response_code(404);
 echo 'Not Found';

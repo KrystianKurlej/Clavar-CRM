@@ -1,9 +1,18 @@
-# Deny listing and restrict direct PHP entry (Apache)
+# SPA-first: serve index.html, route /api/* to PHP
 Options -Indexes
+DirectoryIndex index.html index.php
 <IfModule mod_rewrite.c>
 RewriteEngine On
-# Route everything to index.php (except existing files)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+
+# API goes to PHP router
+RewriteCond %{REQUEST_URI} ^/api/
 RewriteRule ^ index.php [QSA,L]
+
+# Allow existing files/dirs
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Fallback to SPA index.html for any other path
+RewriteRule ^ index.html [L]
 </IfModule>

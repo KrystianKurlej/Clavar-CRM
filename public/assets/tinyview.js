@@ -1,6 +1,6 @@
 // TinyView: ultra-light includes + loops for static HTML, no build step
 // Usage:
-//  - <div data-include="/static/partials/nav.html"></div>
+//  - <div data-include="/partials/nav.html"></div>
 //  - <ul data-each="item in items"><li>{{item.name}}</li></ul>
 //  - set data on window.TINYVIEW = { items: [...] }
 (function(){
