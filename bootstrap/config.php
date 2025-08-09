@@ -48,13 +48,17 @@ if ($allowedOrigins) {
     $config['cors']['allowed_origins'] = array_map('trim', explode(',', $allowedOrigins));
 }
 
-// Local file override (gitignored): bootstrap/config.local.php should return an array of overrides
-$local = __DIR__ . '/config.local.php';
-if (is_file($local)) {
-    $overrides = require $local;
-    if (is_array($overrides)) {
-        // shallow merge
-        $config = array_replace_recursive($config, $overrides);
+// Local file override (gitignored): prefer bootstrap/config.local.php, fallback to project root config.local.php
+$localBootstrap = __DIR__ . '/config.local.php';
+$localRoot = __DIR__ . '/../config.local.php';
+foreach ([$localBootstrap, $localRoot] as $local) {
+    if (is_file($local)) {
+        $overrides = require $local;
+        if (is_array($overrides)) {
+            // shallow merge
+            $config = array_replace_recursive($config, $overrides);
+        }
+        break;
     }
 }
 

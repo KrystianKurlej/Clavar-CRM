@@ -4,6 +4,7 @@
 # PHP
 /vendor/
 /composer.lock
+config.local.php
 
 # Data
 /data/*.sqlite
