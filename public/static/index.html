@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simple CRM — Frontend</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width: 720px; margin: 40px auto; }
+      input, button { padding: 10px; margin: 6px 0; }
+      .row { display: grid; gap: 8px; max-width: 420px; }
+      .error { color: #b91c1c; }
+      code { background: #f3f4f6; padding: 2px 4px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <h1>Frontend (statyczny) — logowanie via API</h1>
+    <p>Ta strona korzysta z endpointów JSON: <code>/api/csrf</code>, <code>/api/login</code>, <code>/api/me</code>, <code>/api/logout</code>.</p>
+
+    <div id="auth">
+      <div class="row" id="loginForm">
+        <label>E-mail <input id="email" type="email" /></label>
+        <label>Hasło <input id="password" type="password" /></label>
+        <button id="loginBtn">Zaloguj</button>
+        <div class="error" id="err"></div>
+      </div>
+
+      <div id="me" style="display:none">
+        <p>Zalogowano jako <span id="meEmail"></span></p>
+        <button id="logoutBtn">Wyloguj</button>
+      </div>
+    </div>
+
+    <script>
+      async function api(path, opts = {}) {
+        const res = await fetch(path, Object.assign({
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        }, opts));
+        if (res.status === 204) return null;
+        return await res.json();
+      }
+
+      async function fetchCSRF() {
+        const data = await api('/api/csrf');
+        return data.csrf;
+      }
+
+      async function refreshMe() {
+        try {
+          const me = await api('/api/me');
+          if (me && me.ok) {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('me').style.display = 'block';
+            document.getElementById('meEmail').textContent = me.user.email;
+          }
+        } catch (e) {
+          // not logged in
+        }
+      }
+
+      document.getElementById('loginBtn').addEventListener('click', async () => {
+        document.getElementById('err').textContent = '';
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const csrf = await fetchCSRF();
+        const res = await api('/api/login', { method: 'POST', body: JSON.stringify({ email, password, _csrf: csrf }) });
+        if (res.ok) {
+          await refreshMe();
+        } else {
+          document.getElementById('err').textContent = res.error || 'Błąd logowania';
+        }
+      });
+
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        const csrf = await fetchCSRF();
+        await api('/api/logout', { method: 'POST', body: JSON.stringify({ _csrf: csrf }) });
+        location.reload();
+      });
+
+      refreshMe();
+    </script>
+  </body>
+</html>

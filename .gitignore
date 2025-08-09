@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+
+# PHP
+/vendor/
+/composer.lock
+
+# Data
+/data/*.sqlite
+/data/**/*.sqlite
+/data/users/
+
+# Env/Secrets
+/bootstrap/*.local.php
