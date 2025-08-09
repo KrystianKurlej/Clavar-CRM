@@ -5,20 +5,33 @@
 {block content}
 {include 'partials/nav.latte'}
 
-{* <form id="createForm" class="row g-2 mb-3" onsubmit="return createProject(this)">
-  <div class="col-auto">
-    <input class="form-control" name="name" placeholder="Nazwa projektu" required />
-  </div>
-  <input type="hidden" name="_csrf" value="{csrfToken()}" />
-  <div class="col-auto">
-    <button class="btn btn-primary" type="submit">Dodaj</button>
-  </div>
-  <div class="col-12"><small id="err" class="text-danger"></small></div>
-</form> *}
+<header class="container my-5">
+    <form id="createForm" class="d-flex align-items-center gap-2" onsubmit="return createProject(this)">
+      <input class="form-control w-100" name="name" placeholder="Nazwa projektu" required />
+      <input type="hidden" name="_csrf" value="{csrfToken()}" />
+      
+      <button class="btn btn-primary flex-shrink-0" type="submit">Dodaj nowy projekt</button>
+    </form>
+</header>
 
-{* <ul id="projects" class="list-group">
-  <li class="list-group-item text-muted" id="empty">Ładowanie…</li>
-</ul> *}
+<main class="container my-5">
+    <ul id="projects" class="list-group">
+        {for $i = 0; $i < 5; $i++}
+            <li class="list-group-item d-flex gap-4 align-items-center justify-content-between">
+                <span>Projekt {$i + 1}</span>
+
+                <div class="d-flex gap-4 align-items-center">
+                    <span>00hh 00min</span>
+
+                    <div class="d-flex gap-2 align-items-center">
+                        <button class="btn btn-outline-secondary">Start</button>
+                        <button class="btn btn-outline-secondary" disabled>Stop</button>
+                    </div>
+                </div>
+            </li>
+        {/for}
+    </ul>
+</main>
 
 {include 'partials/footer.latte'}
 {/block}
