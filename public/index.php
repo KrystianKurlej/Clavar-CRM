@@ -2,8 +2,13 @@
 declare(strict_types=1);
 
 // Bootstrap
-$autoload = __DIR__ . '/../vendor/autoload.php';
-if (is_file($autoload)) { require $autoload; }
+$autoloadCandidates = [
+    __DIR__ . '/../vendor/autoload.php', // project root
+    __DIR__ . '/vendor/autoload.php',    // sometimes vendor uploaded into public
+];
+foreach ($autoloadCandidates as $autoload) {
+    if (is_file($autoload)) { require $autoload; break; }
+}
 $config = require __DIR__ . '/../bootstrap/config.php';
 require __DIR__ . '/../app/Support.php';
 require __DIR__ . '/../app/Auth.php';
@@ -12,6 +17,15 @@ require __DIR__ . '/../app/DB.php';
 date_default_timezone_set($config['timezone']);
 ensure_dir($config['data_dir']);
 ensure_dir($config['users_dir']);
+// Log PHP errors to a writable place
+$logDir = rtrim($config['data_dir'] ?? (__DIR__ . '/../data'), '/') . '/logs';
+if (!ensure_dir($logDir)) {
+    $logDir = sys_get_temp_dir() . '/calvar-crm/logs';
+    ensure_dir($logDir);
+}
+@ini_set('log_errors', '1');
+@ini_set('display_errors', '0');
+@ini_set('error_log', rtrim($logDir, '/') . '/php-error.log');
 
 $auth = new Auth($config);
 $auth->startSession();
@@ -24,6 +38,27 @@ handle_cors($config);
 
 // API routes (JSON)
 if (str_starts_with($path, '/api/')) {
+    if ($path === '/api/health' && $method === 'GET') {
+        $latteOk = class_exists('Latte\\Engine');
+        $sqliteOk = extension_loaded('pdo_sqlite');
+        $vendorPaths = [__DIR__ . '/../vendor/autoload.php', __DIR__ . '/vendor/autoload.php'];
+        $vendorFound = null; foreach ($vendorPaths as $vp) { if (is_file($vp)) { $vendorFound = $vp; break; } }
+        // write test in data_dir
+        $writeTest = false; $writeErr = null;
+        $testFile = rtrim($config['data_dir'] ?? (__DIR__ . '/../data'), '/') . '/.writetest';
+        try { if (ensure_dir(dirname($testFile)) && @file_put_contents($testFile, (string)time()) !== false) { $writeTest = true; @unlink($testFile); } }
+        catch (Throwable $e) { $writeErr = $e->getMessage(); }
+        $resp = [
+            'ok' => true,
+            'php' => PHP_VERSION,
+            'latte' => $latteOk,
+            'pdo_sqlite' => $sqliteOk,
+            'vendor_autoload' => $vendorFound,
+            'data_dir' => [ 'path' => $config['data_dir'], 'exists' => is_dir($config['data_dir']), 'writable' => is_writable($config['data_dir']), 'write_test' => $writeTest, 'write_err' => $writeErr ],
+            'users_dir' => [ 'path' => $config['users_dir'], 'exists' => is_dir($config['users_dir']), 'writable' => is_writable($config['users_dir']) ],
+        ];
+        json($resp);
+    }
     if ($path === '/api/csrf' && $method === 'GET') {
         json(['csrf' => $auth->csrfToken()]);
     }
@@ -161,14 +196,19 @@ if (str_starts_with($path, '/api/')) {
 
 // Server-side routes (pages)
 use Latte\Engine;
-$latte = new Engine();
-// Choose writable cache dir for Latte
-$latteCache = rtrim($config['data_dir'] ?? (__DIR__ . '/../data'), '/') . '/_latte';
-if (!ensure_dir($latteCache)) {
-    $tmp = sys_get_temp_dir() . '/calvar-crm/_latte';
-    ensure_dir($tmp);
-    $latteCache = $tmp;
+if (!class_exists('Latte\\Engine')) {
+    http_response_code(500);
+    echo 'Brak zależności aplikacji (vendor). Zainstaluj dependencies: composer install, a następnie odśwież stronę.';
+    exit;
 }
+$latte = new Engine();
+// Choose writable cache dir for Latte (prefer system temp on shared hosting)
+$tmp = sys_get_temp_dir() . '/calvar-crm/_latte';
+if (!ensure_dir($tmp)) {
+    $tmp = rtrim($config['data_dir'] ?? (__DIR__ . '/../data'), '/') . '/_latte';
+    ensure_dir($tmp);
+}
+$latteCache = $tmp;
 $latte->setTempDirectory($latteCache);
 $views = __DIR__ . '/../views';
 

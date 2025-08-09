@@ -17,7 +17,7 @@
   <li class="list-group-item text-muted" id="empty">Ładowanie…</li>
 </ul>
 
-<script>
+<script n:syntax="off">
   async function api(path, opts = {}){
     const res = await fetch(path, Object.assign({ credentials:'include' }, opts));
     if (res.status === 204) return null; try { return await res.json(); } catch(e){ return null; }
