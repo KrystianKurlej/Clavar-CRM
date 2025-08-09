@@ -1,0 +1,2 @@
+# Extra safety: deny access if data/ ends up under web root (Apache)
+Require all denied
