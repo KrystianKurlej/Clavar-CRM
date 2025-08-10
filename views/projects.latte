@@ -27,6 +27,11 @@
                         <td class="align-middle">
                             <span class="project-time">{$item['total']}</span>
                         </td>
+                        <td class="align-middle">
+                            <span class="badge text-bg-success" {if !$item['running']}style="display: none;"{/if}>
+                                Uruchomiony
+                            </span>
+                        </td>
                         <td class="d-flex gap-2 align-items-center justify-content-end">
                             <button
                                 type="button"

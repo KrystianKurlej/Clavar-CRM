@@ -90,9 +90,11 @@ function updateProject(projectId, isRunning, time){
     if (isRunning) {
         tableRow.find('.stop-project').attr('disabled', false);
         tableRow.find('.start-project').attr('disabled', true);
+        tableRow.find('.badge.text-bg-success').show();
     } else {
         tableRow.find('.start-project').attr('disabled', false);
         tableRow.find('.stop-project').attr('disabled', true);
+        tableRow.find('.badge.text-bg-success').hide();
     }
 
     tableRow.find('.project-time').text(time);
