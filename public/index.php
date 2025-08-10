@@ -18,6 +18,7 @@ require __DIR__ . '/../app/DB.php';
 @require __DIR__ . '/../app/Controllers/Ajax/ProjectsController.php';
 @require __DIR__ . '/../app/Controllers/Api/ProjectsApiController.php';
 @require __DIR__ . '/../app/Controllers/Pages/ProjectsPageController.php';
+@require __DIR__ . '/../app/Controllers/Pages/ReportsPageController.php';
 
 date_default_timezone_set($config['timezone']);
 ensure_dir($config['data_dir']);
@@ -227,6 +228,14 @@ if ($path === '/login') {
 // Projects page (auth required)
 if ($path === '/projects') {
     $page = class_exists('ProjectsPageController') ? new ProjectsPageController($auth, $latte, $views) : null;
+    if (!$page) { http_response_code(500); echo 'Controller missing'; exit; }
+    $page->show();
+    exit;
+}
+
+// Reports page (auth required)
+if ($path === '/reports') {
+    $page = class_exists('ReportsPageController') ? new ReportsPageController($auth, $latte, $views) : null;
     if (!$page) { http_response_code(500); echo 'Controller missing'; exit; }
     $page->show();
     exit;

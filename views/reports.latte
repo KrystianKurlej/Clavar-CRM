@@ -1,0 +1,25 @@
+{layout 'layout.latte'}
+
+{block title}Raporty{/block}
+
+{block content}
+{include 'partials/nav.latte'}
+
+<header class="container my-3">
+    <div class="bg-body p-3 rounded">
+        <form id="createProjectForm" class="form d-flex align-items-center gap-2" method="POST" action="/ax_projects" data-refresh="true">
+          <input class="form-control w-100" name="name" placeholder="Nazwa projektu" required />
+          <input type="hidden" name="action" value="create_project" />
+          <input type="hidden" name="_csrf" value="{csrfToken()}" />
+        
+          <button class="btn btn-primary flex-shrink-0" type="submit">Utwórz nowy raport</button>
+        </form>
+    </div>
+</header>
+
+<main class="container my-2">
+    
+</main>
+
+{include 'partials/footer.latte'}
+{/block}
