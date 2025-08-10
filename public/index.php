@@ -41,6 +41,14 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 // CORS (for API)
 handle_cors($config);
 
+// Central API auth gate (whitelist unauthenticated endpoints)
+$apiWhitelist = ['/api/health', '/api/csrf', '/api/login', '/api/seed-user'];
+if (str_starts_with($path, '/api/') && $method !== 'OPTIONS' && !in_array($path, $apiWhitelist, true)) {
+    if (!$auth->isLoggedIn()) {
+        json(['ok' => false, 'error' => 'Unauthorized'], 401);
+    }
+}
+
 // API routes (JSON)
 if (str_starts_with($path, '/api/')) {
     if ($path === '/api/health' && $method === 'GET') {
