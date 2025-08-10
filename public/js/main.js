@@ -5,12 +5,13 @@ $(document).ready(function () {
         const url = $(this).attr("action");
         const successModal = $(this).data("success-modal") || false;
         const errorModal = $(this).data("error-modal") || false;
+        const refresh = $(this).data("refresh") || false;
 
-        sendForm(method, form, url, event, successModal, errorModal);
+        sendForm(method, form, url, event, refresh, successModal, errorModal);
     });
 });
 
-function sendForm(method, form, endpoint, event, successModal, errorModal){
+function sendForm(method, form, endpoint, event, refresh, successModal, errorModal){
     event.preventDefault();
 
     form.find(':required').each(function() {
@@ -38,8 +39,14 @@ function sendForm(method, form, endpoint, event, successModal, errorModal){
         success: function(response) {
             if (!response.status || response.status === "success") {
                 form[0].reset();
-                closeModal();
-                openModal(successModal);
+
+                if (refresh) {
+                    location.reload();
+                } else {
+                    closeModal();
+                    openModal(successModal);
+                }
+
                 return;
             }
             
