@@ -148,9 +148,15 @@ if (str_starts_with($path, '/api/')) {
     DB::ensureSchema($pdo);
     $projRepo = class_exists('ProjectRepository') ? new ProjectRepository() : null;
 
-        // GET /api/projects -> list non-archived
+        // GET /api/projects -> list non-archived (+ running state)
         if ($path === '/api/projects' && $method === 'GET') {
             $rows = $projRepo ? $projRepo->listActive($pdo) : (function($pdo){ $stmt = $pdo->query('SELECT id, name, archived, created_at FROM projects WHERE archived = 0 ORDER BY created_at DESC'); return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []; })($pdo);
+            if ($projRepo) {
+                foreach ($rows as &$r) {
+                    $r['running'] = $projRepo->isRunning($pdo, (int)$r['id']);
+                }
+                unset($r);
+            }
             json(['ok' => true, 'projects' => $rows]);
         }
 
@@ -247,6 +253,15 @@ if ($path === '/projects') {
     DB::ensureSchema($pdo);
     $projRepo = class_exists('ProjectRepository') ? new ProjectRepository() : null;
     $projects = $projRepo ? $projRepo->listActive($pdo) : (function($pdo){ $stmt = $pdo->query('SELECT id, name, archived, created_at FROM projects WHERE archived = 0 ORDER BY created_at DESC'); return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []; })($pdo);
+    // enrich with totals & running state
+    if ($projRepo) {
+        foreach ($projects as &$p) {
+            $secs = $projRepo->totalSeconds($pdo, (int)$p['id']);
+            $p['total'] = $projRepo->formatHHMM($secs);
+            $p['running'] = $projRepo->isRunning($pdo, (int)$p['id']);
+        }
+        unset($p);
+    }
     render($latte, 'projects', ['projects' => $projects]);
     exit;
 }

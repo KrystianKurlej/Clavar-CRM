@@ -99,7 +99,13 @@ function startProject(projectId, csrf) {
         processData: false,
         url: '/ax_projects',
         success: function(response) {
-            console.log(response);
+            if(response.running){
+                $('tr[data-project-id="' + projectId + '"] .stop-project').attr('disabled', false);
+                $('tr[data-project-id="' + projectId + '"] .start-project').attr('disabled', true);
+            } else {
+                $('tr[data-project-id="' + projectId + '"] .start-project').attr('disabled', false);
+                $('tr[data-project-id="' + projectId + '"] .stop-project').attr('disabled', true);
+            }
         },
         error: function(error) {
             console.error(error);
@@ -107,10 +113,11 @@ function startProject(projectId, csrf) {
     })
 }
 
-function stopProject(projectId) {
+function stopProject(projectId, csrf) {
     const formData = new FormData();
 
     formData.append('action', 'stop_project');
+    formData.append('_csrf', csrf);
     formData.append('project_id', projectId);
 
     $.ajax({
@@ -121,7 +128,13 @@ function stopProject(projectId) {
         processData: false,
         url: '/ax_projects',
         success: function(response) {
-            console.log(response);
+            if(response.running){
+                $('tr[data-project-id="' + projectId + '"] .stop-project').attr('disabled', false);
+                $('tr[data-project-id="' + projectId + '"] .start-project').attr('disabled', true);
+            } else {
+                $('tr[data-project-id="' + projectId + '"] .start-project').attr('disabled', false);
+                $('tr[data-project-id="' + projectId + '"] .stop-project').attr('disabled', true);
+            }
         },
         error: function(error) {
             console.error(error);

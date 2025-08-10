@@ -37,6 +37,22 @@ final class ProjectsController
                     $id = $repo->create($this->pdo(), $name);
                     json(['status' => 'success', 'id' => $id]);
                     break;
+                case 'start_project':
+                    $pid = (int)($_POST['project_id'] ?? 0);
+                    if ($pid <= 0) { json(['status' => 'error', 'message' => 'project_id wymagane'], 422); }
+                    $pdo = $this->pdo();
+                    $repo->startTimer($pdo, $pid);
+                    $secs = $repo->totalSeconds($pdo, $pid);
+                    json(['status' => 'success', 'total' => $repo->formatHHMM($secs), 'running' => true]);
+                    break;
+                case 'stop_project':
+                    $pid = (int)($_POST['project_id'] ?? 0);
+                    if ($pid <= 0) { json(['status' => 'error', 'message' => 'project_id wymagane'], 422); }
+                    $pdo = $this->pdo();
+                    $repo->stopTimer($pdo, $pid);
+                    $secs = $repo->totalSeconds($pdo, $pid);
+                    json(['status' => 'success', 'total' => $repo->formatHHMM($secs), 'running' => false]);
+                    break;
                 case 'archive_project':
                     $id = (int)($_POST['id'] ?? 0);
                     if ($id <= 0) { json(['status' => 'error', 'message' => 'ID wymagane'], 422); }

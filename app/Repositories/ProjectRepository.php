@@ -28,4 +28,61 @@ class ProjectRepository
         $stmt = $pdo->prepare('DELETE FROM projects WHERE id = :id');
         $stmt->execute([':id' => $id]);
     }
+
+    public function startTimer(PDO $pdo, int $projectId): void
+    {
+        // ensure no active timer exists for this project
+        $active = $pdo->prepare('SELECT id FROM project_time_entries WHERE project_id = :pid AND stopped_at IS NULL LIMIT 1');
+        $active->execute([':pid' => $projectId]);
+        if ($active->fetchColumn()) {
+            return; // idempotent start
+        }
+        $stmt = $pdo->prepare('INSERT INTO project_time_entries(project_id) VALUES(:pid)');
+        $stmt->execute([':pid' => $projectId]);
+    }
+
+    public function stopTimer(PDO $pdo, int $projectId): void
+    {
+        // stop the latest active timer
+        $stmt = $pdo->prepare('UPDATE project_time_entries SET stopped_at = CURRENT_TIMESTAMP WHERE project_id = :pid AND stopped_at IS NULL');
+        $stmt->execute([':pid' => $projectId]);
+    }
+
+    public function totalSeconds(PDO $pdo, int $projectId): int
+    {
+        // sum closed intervals
+        $sqlClosed = 'SELECT COALESCE(SUM(strftime("%s", stopped_at) - strftime("%s", started_at)), 0) AS secs FROM project_time_entries WHERE project_id = :pid AND stopped_at IS NOT NULL';
+        $stmt = $pdo->prepare($sqlClosed);
+        $stmt->execute([':pid' => $projectId]);
+        $closed = (int)$stmt->fetchColumn();
+
+        // add active interval if exists
+        $sqlOpen = 'SELECT started_at FROM project_time_entries WHERE project_id = :pid AND stopped_at IS NULL ORDER BY id DESC LIMIT 1';
+        $stmt2 = $pdo->prepare($sqlOpen);
+        $stmt2->execute([':pid' => $projectId]);
+        $started = $stmt2->fetchColumn();
+        if ($started) {
+            $stmt3 = $pdo->query('SELECT strftime("%s", "now")');
+            $now = (int)$stmt3->fetchColumn();
+            $stmt4 = $pdo->prepare('SELECT strftime("%s", :started)');
+            $stmt4->execute([':started' => $started]);
+            $st = (int)$stmt4->fetchColumn();
+            $closed += max(0, $now - $st);
+        }
+        return $closed;
+    }
+
+    public function formatHHMM(int $seconds): string
+    {
+        $hours = intdiv($seconds, 3600);
+        $minutes = intdiv($seconds % 3600, 60);
+        return sprintf('%02dh %02dmin', $hours, $minutes);
+    }
+
+    public function isRunning(PDO $pdo, int $projectId): bool
+    {
+        $stmt = $pdo->prepare('SELECT 1 FROM project_time_entries WHERE project_id = :pid AND stopped_at IS NULL LIMIT 1');
+        $stmt->execute([':pid' => $projectId]);
+        return (bool)$stmt->fetchColumn();
+    }
 }

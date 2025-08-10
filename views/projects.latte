@@ -33,6 +33,7 @@
                                 class="start-project btn btn-outline-secondary"
                                 data-project-id="{$item['id']}"
                                 data-csrf="{csrfToken()}"
+                                {if $item['running']}disabled{/if}
                             >
                                 Start
                             </button>
@@ -41,7 +42,7 @@
                                 class="stop-project btn btn-outline-secondary"
                                 data-project-id="{$item['id']}"
                                 data-csrf="{csrfToken()}"
-                                disabled
+                                {if !$item['running']}disabled{/if}
                             >
                                 Stop
                             </button>

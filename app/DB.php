@@ -32,5 +32,18 @@ class DB
         );
         // Index to speed up non-archived queries
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_projects_archived_created ON projects(archived, created_at DESC)');
+
+        // Time entries per project
+        $pdo->exec(
+            'CREATE TABLE IF NOT EXISTS project_time_entries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id INTEGER NOT NULL,
+                started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                stopped_at TEXT NULL,
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+            )'
+        );
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_pte_project ON project_time_entries(project_id)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_pte_active ON project_time_entries(project_id, stopped_at)');
     }
 }
