@@ -1,28 +1,29 @@
 {layout 'layout.latte'}
 {block title}Logowanie{/block}
 {block content}
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title mb-3">Zaloguj się</h5>
+
+<div class="d-flex align-items-center py-4 bg-body-tertiary" style="height: 100svh;">
+    <div class="w-100 m-auto" style="max-width: 330px;">
+      <form method="post" action="/api/login" onsubmit="return loginSubmit(this)">
+        <img src="/img/logo.svg" alt="Calvar" class="w-100" style="height: 32px;">
         <div n:if="$error" class="alert alert-danger">{$error}</div>
-        <form method="post" action="/api/login" onsubmit="return loginSubmit(this)">
-          <div class="mb-3">
-            <label class="form-label">E-mail</label>
+        
+        <div class="form-floating mt-5">
             <input class="form-control" type="email" name="email" required />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Hasło</label>
+            <label for="email">E-mail</label>
+        </div>
+        <div class="form-floating mt-1">
             <input class="form-control" type="password" name="password" required />
-          </div>
-          <input type="hidden" name="_csrf" value="{csrfToken()}" />
-          <button class="btn btn-primary" type="submit">Zaloguj</button>
-        </form>
-      </div>
+            <label for="password">Hasło</label>
+        </div>
+        
+        <button class="btn btn-primary w-100 py-2 mt-4" type="submit">Zaloguj się</button>
+        
+        <input type="hidden" name="_csrf" value="{csrfToken()}" />
+      </form>
     </div>
-  </div>
 </div>
+
 <script n:syntax="off">
   async function loginSubmit(form){
     const data = Object.fromEntries(new FormData(form));
