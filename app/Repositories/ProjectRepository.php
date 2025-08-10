@@ -69,7 +69,11 @@ class ProjectRepository
             $st = (int)$stmt4->fetchColumn();
             $closed += max(0, $now - $st);
         }
-        return $closed;
+    // add base_seconds from projects
+    $stmt5 = $pdo->prepare('SELECT base_seconds FROM projects WHERE id = :pid');
+    $stmt5->execute([':pid' => $projectId]);
+    $base = (int)$stmt5->fetchColumn();
+    return $closed + $base;
     }
 
     public function formatHHMM(int $seconds): string
@@ -84,5 +88,21 @@ class ProjectRepository
         $stmt = $pdo->prepare('SELECT 1 FROM project_time_entries WHERE project_id = :pid AND stopped_at IS NULL LIMIT 1');
         $stmt->execute([':pid' => $projectId]);
         return (bool)$stmt->fetchColumn();
+    }
+
+    public function resetAndSetBaseTime(PDO $pdo, int $projectId, int $baseSeconds): void
+    {
+        // wipe all time entries
+        $del = $pdo->prepare('DELETE FROM project_time_entries WHERE project_id = :pid');
+        $del->execute([':pid' => $projectId]);
+        // set base time
+        $upd = $pdo->prepare('UPDATE projects SET base_seconds = :bs WHERE id = :pid');
+        $upd->execute([':bs' => max(0, $baseSeconds), ':pid' => $projectId]);
+    }
+
+    public function updateName(PDO $pdo, int $projectId, string $name): void
+    {
+        $stmt = $pdo->prepare('UPDATE projects SET name = :name WHERE id = :pid');
+        $stmt->execute([':name' => $name, ':pid' => $projectId]);
     }
 }

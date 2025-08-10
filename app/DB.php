@@ -30,6 +30,18 @@ class DB
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )'
         );
+        // Add base_seconds column if missing (for manual time override)
+        try {
+            $hasCol = false;
+            $stmt = $pdo->query('PRAGMA table_info(projects)');
+            $cols = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+            foreach ($cols as $c) { if (($c['name'] ?? '') === 'base_seconds') { $hasCol = true; break; } }
+            if (!$hasCol) {
+                $pdo->exec('ALTER TABLE projects ADD COLUMN base_seconds INTEGER NOT NULL DEFAULT 0');
+            }
+        } catch (Throwable $e) {
+            // ignore if already exists / older SQLite without alter capabilities
+        }
         // Index to speed up non-archived queries
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_projects_archived_created ON projects(archived, created_at DESC)');
 

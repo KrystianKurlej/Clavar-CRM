@@ -65,6 +65,20 @@ final class ProjectsController
                     $repo->delete($this->pdo(), $id);
                     json(['status' => 'success']);
                     break;
+                case 'edit_project':
+                    $pid = (int)($_POST['id'] ?? 0);
+                    if ($pid <= 0) { json(['status' => 'error', 'message' => 'ID wymagane'], 422); }
+                    $name = trim((string)($_POST['name'] ?? ''));
+                    $hours = (int)($_POST['hours'] ?? 0);
+                    $minutes = (int)($_POST['minutes'] ?? 0);
+                    $baseSeconds = max(0, $hours) * 3600 + max(0, min(59, $minutes)) * 60;
+                    $pdo = $this->pdo();
+                    $repo->resetAndSetBaseTime($pdo, $pid, $baseSeconds);
+                    if ($name !== '') { $repo->updateName($pdo, $pid, $name); }
+                    $secs = $repo->totalSeconds($pdo, $pid);
+                    $running = $repo->isRunning($pdo, $pid);
+                    json(['status' => 'success', 'total' => $repo->formatHHMM($secs), 'running' => $running]);
+                    break;
                 default:
                     json(['status' => 'error', 'message' => 'Unknown action'], 400);
             }
