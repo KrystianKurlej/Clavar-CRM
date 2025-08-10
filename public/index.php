@@ -13,6 +13,9 @@ $config = require __DIR__ . '/../bootstrap/config.php';
 require __DIR__ . '/../app/Support.php';
 require __DIR__ . '/../app/Auth.php';
 require __DIR__ . '/../app/DB.php';
+// lightweight psr-4-less includes for our simple OOP structure
+@require __DIR__ . '/../app/Repositories/ProjectRepository.php';
+@require __DIR__ . '/../app/Controllers/Ajax/ProjectsController.php';
 
 date_default_timezone_set($config['timezone']);
 ensure_dir($config['data_dir']);
@@ -140,14 +143,14 @@ if (str_starts_with($path, '/api/')) {
     // Projects API (auth required)
     if (str_starts_with($path, '/api/projects')) {
         if (!$auth->isLoggedIn()) { json(['ok' => false, 'error' => 'Unauthorized'], 401); }
-        $user = $auth->user();
-        $pdo = DB::connect($user['db_path']);
-        DB::ensureSchema($pdo);
+    $user = $auth->user();
+    $pdo = DB::connect($user['db_path']);
+    DB::ensureSchema($pdo);
+    $projRepo = class_exists('ProjectRepository') ? new ProjectRepository() : null;
 
         // GET /api/projects -> list non-archived
         if ($path === '/api/projects' && $method === 'GET') {
-            $stmt = $pdo->query('SELECT id, name, archived, created_at FROM projects WHERE archived = 0 ORDER BY created_at DESC');
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            $rows = $projRepo ? $projRepo->listActive($pdo) : (function($pdo){ $stmt = $pdo->query('SELECT id, name, archived, created_at FROM projects WHERE archived = 0 ORDER BY created_at DESC'); return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []; })($pdo);
             json(['ok' => true, 'projects' => $rows]);
         }
 
@@ -158,9 +161,8 @@ if (str_starts_with($path, '/api/')) {
             $auth->checkCsrf();
             $name = trim((string)($input['name'] ?? ''));
             if ($name === '') { json(['ok' => false, 'error' => 'Name required'], 422); }
-            $stmt = $pdo->prepare('INSERT INTO projects(name) VALUES(:name)');
-            $stmt->execute([':name' => $name]);
-            $id = (int)$pdo->lastInsertId();
+            if ($projRepo) { $id = $projRepo->create($pdo, $name); }
+            else { $stmt = $pdo->prepare('INSERT INTO projects(name) VALUES(:name)'); $stmt->execute([':name' => $name]); $id = (int)$pdo->lastInsertId(); }
             json(['ok' => true, 'id' => $id]);
         }
 
@@ -187,8 +189,8 @@ if (str_starts_with($path, '/api/')) {
             $input = json_decode(file_get_contents('php://input'), true) ?? [];
             $_POST['_csrf'] = $input['_csrf'] ?? '';
             $auth->checkCsrf();
-            $stmt = $pdo->prepare('DELETE FROM projects WHERE id = :id');
-            $stmt->execute([':id' => $id]);
+            if ($projRepo) { $projRepo->delete($pdo, $id); }
+            else { $stmt = $pdo->prepare('DELETE FROM projects WHERE id = :id'); $stmt->execute([':id' => $id]); }
             json(['ok' => true]);
         }
     }
@@ -240,8 +242,26 @@ if ($path === '/login') {
 // Projects page (auth required)
 if ($path === '/projects') {
     if (!$auth->isLoggedIn()) { redirect('/login'); }
-    render($latte, 'projects');
+    $user = $auth->user();
+    $pdo = DB::connect($user['db_path']);
+    DB::ensureSchema($pdo);
+    $projRepo = class_exists('ProjectRepository') ? new ProjectRepository() : null;
+    $projects = $projRepo ? $projRepo->listActive($pdo) : (function($pdo){ $stmt = $pdo->query('SELECT id, name, archived, created_at FROM projects WHERE archived = 0 ORDER BY created_at DESC'); return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []; })($pdo);
+    render($latte, 'projects', ['projects' => $projects]);
     exit;
+}
+
+// AJAX form actions (non-API) routed to OOP controller
+if ($path === '/ax_projects' && $method === 'POST') {
+    if (class_exists('ProjectsController')) {
+        $controller = new ProjectsController($auth, $config);
+        $controller->handle();
+    } else {
+        // Fallback: preserve existing behavior if controller not available
+        if (!$auth->isLoggedIn()) { json(['status' => 'error', 'message' => 'Unauthorized']); }
+        $auth->checkCsrf();
+        json(['status' => 'error', 'message' => 'Controller missing'], 500);
+    }
 }
 
 http_response_code(404);
