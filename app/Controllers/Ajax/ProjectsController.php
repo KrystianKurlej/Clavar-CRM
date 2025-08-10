@@ -26,6 +26,7 @@ final class ProjectsController
 
         $action = (string)($_POST['action'] ?? '');
         $repo = new ProjectRepository();
+    $reportRepo = class_exists('ReportRepository') ? new ReportRepository() : null;
 
         try {
             switch ($action) {
@@ -64,6 +65,22 @@ final class ProjectsController
                     if ($id <= 0) { json(['status' => 'error', 'message' => 'ID wymagane'], 422); }
                     $repo->delete($this->pdo(), $id);
                     json(['status' => 'success']);
+                    break;
+                case 'create_report':
+                    if (!$reportRepo) { json(['status' => 'error', 'message' => 'Server missing reports module'], 500); }
+                    $costRaw = trim((string)($_POST['cost_per_hour'] ?? ''));
+                    // Accept formats like "120", "120,50", "120.50", with spaces
+                    $costRaw = str_replace([' ', ' '], '', $costRaw);
+                    if (strpos($costRaw, ',') !== false && strpos($costRaw, '.') === false) {
+                        $costRaw = str_replace(',', '.', $costRaw);
+                    }
+                    $costPerHour = $costRaw !== '' ? (float)$costRaw : 0.0;
+                    // projects[] from multipart
+                    $projectIds = $_POST['projects'] ?? [];
+                    if (!is_array($projectIds)) { $projectIds = [$projectIds]; }
+                    $pdo = $this->pdo();
+                    $reportId = $reportRepo->create($pdo, (int)round($costPerHour * 100), array_map('intval', $projectIds));
+                    json(['status' => 'success', 'id' => $reportId, 'url' => '/reports/' . $reportId]);
                     break;
                 case 'edit_project':
                     $pid = (int)($_POST['id'] ?? 0);

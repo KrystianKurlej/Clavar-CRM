@@ -1,0 +1,21 @@
+{layout 'layout.latte'}
+
+{block title}Raport {$report['title']}{/block}
+
+{block content}
+{include 'partials/nav.latte'}
+
+<main class="container mt-3">
+    <h1 class="h4">Raport {$report['title']}</h1>
+    <div class="text-muted mb-3">Stawka: {(($report['cost_per_hour_cents'] ?? 0) / 100)|noescape} PLN / h</div>
+
+    <h2 class="h6 mt-4">Projekty</h2>
+    <ul>
+        {foreach $report['projects'] as $p}
+            <li><a href="/projects#{$p['id']}">{$p['name']}</a></li>
+        {/foreach}
+    </ul>
+</main>
+
+{include 'partials/footer.latte'}
+{/block}

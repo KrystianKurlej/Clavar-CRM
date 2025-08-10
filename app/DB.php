@@ -57,5 +57,24 @@ class DB
         );
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_pte_project ON project_time_entries(project_id)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_pte_active ON project_time_entries(project_id, stopped_at)');
+
+        // Reports and their projects
+        $pdo->exec(
+            'CREATE TABLE IF NOT EXISTS reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cost_per_hour_cents INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )'
+        );
+        $pdo->exec(
+            'CREATE TABLE IF NOT EXISTS report_projects (
+                report_id INTEGER NOT NULL,
+                project_id INTEGER NOT NULL,
+                PRIMARY KEY(report_id, project_id),
+                FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE,
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+            )'
+        );
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_report_projects_report ON report_projects(report_id)');
     }
 }

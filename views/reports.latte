@@ -5,20 +5,55 @@
 {block content}
 {include 'partials/nav.latte'}
 
-<header class="container my-3">
-    <div class="bg-body p-3 rounded">
-        <form id="createProjectForm" class="form d-flex align-items-center gap-2" method="POST" action="/ax_projects" data-refresh="true">
-          <input class="form-control w-100" name="name" placeholder="Nazwa projektu" required />
-          <input type="hidden" name="action" value="create_project" />
-          <input type="hidden" name="_csrf" value="{csrfToken()}" />
+<header class="container mt-3 mb-4">
+    <form id="createReportForm" class="form" method="POST" action="/ax_projects" data-refresh="true">
+        <div class="bg-body p-3 rounded d-flex align-items-center gap-2">
+            <input class="form-control w-100" name="cost_per_hour" placeholder="Cena za godzinę w PLN (opcjonalne)" />
         
-          <button class="btn btn-primary flex-shrink-0" type="submit">Utwórz nowy raport</button>
-        </form>
-    </div>
+            <button class="btn btn-primary flex-shrink-0" type="submit">Utwórz nowy raport</button>
+        </div>
+
+        <div class="form bg-body p-3 rounded my-3">
+            <table class="projects-table table table-hover">
+                <tbody>
+                    {foreach $projects as $item}
+                        <tr class="project-row">
+                            <td class="align-middle">
+                                <input type="checkbox" class="form-check-input" value="{$item['id']}" name="projects[]" />
+                            </td>
+                            <td class="align-middle">{$item['name']}</td>
+                            <td class="align-middle">
+                                <span class="project-time">{$item['total']}</span>
+                            </td>
+                        </tr>
+                    {/foreach}
+                </tbody>
+            </table>
+            <input type="hidden" name="action" value="create_report" />
+            <input type="hidden" name="_csrf" value="{csrfToken()}" />
+        </div>
+    </form>
 </header>
 
-<main class="container my-2">
-    
+<main class="container">
+    <span class="text-muted">
+        Utworzone raporty
+    </span>
+    <div class="mt-2">
+        {ifset $reports}
+            {if count($reports)}
+                <ul class="list-unstyled">
+                    {foreach $reports as $r}
+                        <li class="mb-1">
+                            <a href="{$r['url']}">Raport {$r['title']}</a>
+                        </li>
+                    {/foreach}
+                </ul>
+            {else}
+                <div class="text-muted">Brak raportów</div>
+            {/if}
+        {/ifset}
+    </div>
 </main>
 
 {include 'partials/footer.latte'}

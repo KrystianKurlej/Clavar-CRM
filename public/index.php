@@ -15,6 +15,7 @@ require __DIR__ . '/../app/Auth.php';
 require __DIR__ . '/../app/DB.php';
 // lightweight psr-4-less includes for our simple OOP structure
 @require __DIR__ . '/../app/Repositories/ProjectRepository.php';
+@require __DIR__ . '/../app/Repositories/ReportRepository.php';
 @require __DIR__ . '/../app/Controllers/Ajax/ProjectsController.php';
 @require __DIR__ . '/../app/Controllers/Api/ProjectsApiController.php';
 @require __DIR__ . '/../app/Controllers/Pages/ProjectsPageController.php';
@@ -238,6 +239,14 @@ if ($path === '/reports') {
     $page = class_exists('ReportsPageController') ? new ReportsPageController($auth, $latte, $views) : null;
     if (!$page) { http_response_code(500); echo 'Controller missing'; exit; }
     $page->show();
+    exit;
+}
+
+// Report detail page (auth required)
+if (preg_match('#^/reports/(\d+)$#', $path, $m)) {
+    $page = class_exists('ReportsPageController') ? new ReportsPageController($auth, $latte, $views) : null;
+    if (!$page) { http_response_code(500); echo 'Controller missing'; exit; }
+    $page->showDetail((int)$m[1]);
     exit;
 }
 
