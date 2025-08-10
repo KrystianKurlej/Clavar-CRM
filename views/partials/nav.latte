@@ -23,14 +23,3 @@
     </div>
   </div>
 </nav>
-
-<script n:syntax="off">
-  async function logoutSubmit(form){
-    try {
-      const data = new FormData(form);
-      await fetch(form.action, { method:'POST', body: JSON.stringify(Object.fromEntries(data)), headers: { 'Content-Type': 'application/json' }, credentials:'include' });
-    } catch(e){}
-    location.href = '/login';
-    return false;
-  }
-</script>
