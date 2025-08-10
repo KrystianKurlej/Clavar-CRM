@@ -9,6 +9,18 @@ $(document).ready(function () {
 
         sendForm(method, form, url, event, refresh, successModal, errorModal);
     });
+
+    $('.start-project').on('click', function() {
+        const projectId = $(this).data('project-id');
+        const csrf = $(this).data('csrf');
+        startProject(projectId, csrf);
+    });
+
+    $('.stop-project').on('click', function() {
+        const projectId = $(this).data('project-id');
+        const csrf = $(this).data('csrf');
+        stopProject(projectId, csrf);
+    });
 });
 
 function sendForm(method, form, endpoint, event, refresh, successModal, errorModal){
@@ -70,4 +82,49 @@ function sendForm(method, form, endpoint, event, refresh, successModal, errorMod
             }
         }
     });
+}
+
+function startProject(projectId, csrf) {
+    const formData = new FormData();
+
+    formData.append('action', 'start_project');
+    formData.append('_csrf', csrf);
+    formData.append('project_id', projectId);
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'json',
+        data: formData,
+        contentType: false,
+        processData: false,
+        url: '/ax_projects',
+        success: function(response) {
+            console.log(response);
+        },
+        error: function(error) {
+            console.error(error);
+        }
+    })
+}
+
+function stopProject(projectId) {
+    const formData = new FormData();
+
+    formData.append('action', 'stop_project');
+    formData.append('project_id', projectId);
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'json',
+        data: formData,
+        contentType: false,
+        processData: false,
+        url: '/ax_projects',
+        success: function(response) {
+            console.log(response);
+        },
+        error: function(error) {
+            console.error(error);
+        }
+    })
 }

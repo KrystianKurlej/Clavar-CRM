@@ -22,14 +22,29 @@
         <table class="table table-hover">
             <tbody>
                 {foreach $projects as $item}
-                    <tr>
+                    <tr class="project-row" data-project-id="{$item['id']}">
                         <td class="align-middle">{$item['name']}</td>
                         <td class="align-middle">
                             <span>00hh 00min</span>
                         </td>
                         <td class="d-flex gap-2 align-items-center justify-content-end">
-                            <button class="btn btn-outline-secondary">Start</button>
-                            <button class="btn btn-outline-secondary" disabled>Stop</button>
+                            <button
+                                type="button"
+                                class="start-project btn btn-outline-secondary"
+                                data-project-id="{$item['id']}"
+                                data-csrf="{csrfToken()}"
+                            >
+                                Start
+                            </button>
+                            <button
+                                type="button"
+                                class="stop-project btn btn-outline-secondary"
+                                data-project-id="{$item['id']}"
+                                data-csrf="{csrfToken()}"
+                                disabled
+                            >
+                                Stop
+                            </button>
                         </td>
                     </tr>
                 {/foreach}
