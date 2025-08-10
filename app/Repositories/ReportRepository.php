@@ -45,9 +45,30 @@ class ReportRepository
         $row['title'] = date('Y-m-d H:i', strtotime($row['created_at']));
         $row['url'] = '/reports/' . $row['id'];
         // projects list
-        $stmt2 = $pdo->prepare('SELECT p.id, p.name FROM report_projects rp JOIN projects p ON p.id = rp.project_id WHERE rp.report_id = :id ORDER BY p.name');
+        $stmt2 = $pdo->prepare('SELECT p.id, p.name, p.created_at FROM report_projects rp JOIN projects p ON p.id = rp.project_id WHERE rp.report_id = :id ORDER BY p.name');
         $stmt2->execute([':id' => $id]);
-        $row['projects'] = $stmt2->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $projects = $stmt2->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        // compute per-project totals and overall totals
+        $projRepo = new ProjectRepository();
+        $sumSeconds = 0;
+        foreach ($projects as &$p) {
+            $pid = (int)$p['id'];
+            $secs = $projRepo->totalSeconds($pdo, $pid);
+            $p['total_seconds'] = $secs;
+            $p['total_formatted'] = $projRepo->formatHHMM($secs);
+            $p['created_at_fmt'] = $p['created_at'] ? date('d.m.Y', strtotime((string)$p['created_at'])) : '';
+            $sumSeconds += $secs;
+        }
+        unset($p);
+        $row['projects'] = $projects;
+        $row['sum_seconds'] = $sumSeconds;
+        $row['sum_formatted'] = $projRepo->formatHHMM($sumSeconds);
+        $cph = (int)($row['cost_per_hour_cents'] ?? 0);
+        if ($cph > 0) {
+            $sumCostCents = (int)round(($sumSeconds / 3600) * $cph);
+            $row['sum_cost_cents'] = $sumCostCents;
+        }
         return $row;
     }
 }

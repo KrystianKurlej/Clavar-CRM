@@ -201,6 +201,25 @@ $latteCache = $tmp;
 $latte->setTempDirectory($latteCache);
 $views = __DIR__ . '/../views';
 
+// Latte filters (DRY formatting)
+$latte->addFilter('hhmm', function ($seconds) {
+    $s = (int)$seconds;
+    if ($s < 0) { $s = 0; }
+    $h = intdiv($s, 3600);
+    $m = intdiv($s % 3600, 60);
+    return sprintf('%02dh %02dmin', $h, $m);
+});
+$latte->addFilter('pln', function ($cents) {
+    $c = (int)$cents;
+    return number_format($c / 100, 2, ',', ' ');
+});
+$latte->addFilter('date_pl', function ($value) {
+    if (!$value) return '';
+    $ts = is_numeric($value) ? (int)$value : strtotime((string)$value);
+    if ($ts === false) return '';
+    return date('d.m.Y', $ts);
+});
+
 function render(Latte\Engine $latte, string $template, array $params = []): void {
     global $views, $config, $auth;
     $params['config'] = $config;

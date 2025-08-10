@@ -13,17 +13,17 @@
             <button class="btn btn-primary flex-shrink-0" type="submit">Utwórz nowy raport</button>
         </div>
 
-        <div class="form bg-body p-3 rounded my-3">
+        <div class="bg-body p-3 rounded my-3">
             <table class="projects-table table table-hover">
                 <tbody>
-                    {foreach $projects as $item}
+                    {foreach $projects as $p}
                         <tr class="project-row">
                             <td class="align-middle">
-                                <input type="checkbox" class="form-check-input" value="{$item['id']}" name="projects[]" />
+                                <input type="checkbox" class="form-check-input" value="{$p['id']}" name="projects[]" />
                             </td>
-                            <td class="align-middle">{$item['name']}</td>
+                            <td class="align-middle">{$p['name']}</td>
                             <td class="align-middle">
-                                <span class="project-time">{$item['total']}</span>
+                                <span class="project-time">{$p['total']}</span>
                             </td>
                         </tr>
                     {/foreach}
@@ -39,20 +39,35 @@
     <span class="text-muted">
         Utworzone raporty
     </span>
-    <div class="mt-2">
-        {ifset $reports}
-            {if count($reports)}
-                <ul class="list-unstyled">
-                    {foreach $reports as $r}
-                        <li class="mb-1">
-                            <a href="{$r['url']}">Raport {$r['title']}</a>
-                        </li>
-                    {/foreach}
-                </ul>
-            {else}
-                <div class="text-muted">Brak raportów</div>
-            {/if}
-        {/ifset}
+    <div class="bg-body p-3 rounded my-3">
+        <table class="reports-table table table-hover">
+            <tbody>
+                {ifset $reports}
+                    {if count($reports)}
+                        {foreach $reports as $r}
+                            <tr>
+                                <td class="align-middle">{$r['title']}</td>
+                                <td class="align-middle d-flex justify-content-end">
+                                    <a
+                                        href="{$r['url']}"
+                                        title="Raport {$r['title']}"
+                                        target="_blank"
+                                        class="btn btn-outline-secondary"
+                                    >
+                                        Otwórz raport
+                                        <i class="bi bi-arrow-up-right"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {/foreach}
+                    {else}
+                        <tr>
+                            <td class="text-muted text-center">Brak raportów</td>
+                        </tr>
+                    {/if}
+                {/ifset}
+            </tbody>
+        </table>
     </div>
 </main>
 
