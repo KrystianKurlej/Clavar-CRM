@@ -1,9 +1,9 @@
-{layout 'layout.latte'}
+{layout '../layout.latte'}
 
 {block title}Raporty{/block}
 
 {block content}
-{include 'partials/nav.latte'}
+{include '../partials/nav.latte'}
 
 <header class="container mt-3 mb-4">
     <form id="createReportForm" class="form" method="POST" action="/ax_projects" data-refresh="true">
@@ -56,5 +56,5 @@
     </div>
 </main>
 
-{include 'partials/footer.latte'}
+{include '../partials/footer.latte'}
 {/block}

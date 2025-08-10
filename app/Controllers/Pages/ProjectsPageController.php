@@ -32,12 +32,12 @@ final class ProjectsPageController
         if (!function_exists('csrfToken')) {
             function csrfToken(): string { global $auth; return $auth->csrfToken(); }
         }
-        $params = [
+    $params = [
             'config' => require __DIR__ . '/../../../bootstrap/config.php',
             'me' => $this->auth->user(),
             'presenterPath' => '/projects',
             'projects' => $projects,
         ];
-        $this->latte->render($this->viewsDir . '/projects.latte', $params);
+    $this->latte->render($this->viewsDir . '/projects/main.latte', $params);
     }
 }

@@ -1,9 +1,9 @@
-{layout 'layout.latte'}
+{layout '../layout.latte'}
 
 {block title}Raport {$report['title']}{/block}
 
 {block content}
-{include 'partials/nav.latte'}
+{include '../partials/nav.latte'}
 
 <main class="container mt-3">
     <h1 class="h4">Raport {$report['title']}</h1>
@@ -17,5 +17,5 @@
     </ul>
 </main>
 
-{include 'partials/footer.latte'}
+{include '../partials/footer.latte'}
 {/block}

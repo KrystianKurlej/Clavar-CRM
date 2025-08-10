@@ -40,14 +40,14 @@ final class ReportsPageController
         $reportRepo = class_exists('ReportRepository') ? new ReportRepository() : null;
         $reports = $reportRepo ? $reportRepo->listAll($pdo) : [];
 
-        $params = [
+    $params = [
             'config' => require __DIR__ . '/../../../bootstrap/config.php',
             'me' => $this->auth->user(),
             'presenterPath' => '/reports',
             'projects' => $projects,
             'reports' => $reports,
         ];
-        $this->latte->render($this->viewsDir . '/reports.latte', $params);
+    $this->latte->render($this->viewsDir . '/reports/main.latte', $params);
     }
 
     public function showDetail(int $id): void
@@ -59,12 +59,12 @@ final class ReportsPageController
         $report = $reportRepo->get($pdo, $id);
         if (!$report) { http_response_code(404); echo 'Report not found'; return; }
 
-        $params = [
+    $params = [
             'config' => require __DIR__ . '/../../../bootstrap/config.php',
             'me' => $this->auth->user(),
             'presenterPath' => '/reports/' . $id,
             'report' => $report,
         ];
-        $this->latte->render($this->viewsDir . '/report_detail.latte', $params);
+    $this->latte->render($this->viewsDir . '/reports/show.latte', $params);
     }
 }
