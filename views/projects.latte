@@ -19,7 +19,7 @@
 
 <main class="container my-2">
     <div class="bg-body p-3 rounded">
-        <table class="table table-hover">
+        <table class="projects-table table table-hover" data-csrf="{csrfToken()}">
             <tbody>
                 {foreach $projects as $item}
                     <tr class="project-row" data-project-id="{$item['id']}">
@@ -37,7 +37,6 @@
                                 type="button"
                                 class="start-project btn btn-outline-secondary"
                                 data-project-id="{$item['id']}"
-                                data-csrf="{csrfToken()}"
                                 {if $item['running']}disabled{/if}
                             >
                                 Start
@@ -46,10 +45,19 @@
                                 type="button"
                                 class="stop-project btn btn-outline-secondary"
                                 data-project-id="{$item['id']}"
-                                data-csrf="{csrfToken()}"
                                 {if !$item['running']}disabled{/if}
                             >
                                 Stop
+                            </button>
+                            <button
+                                type="button"
+                                class="delete-modal-btn btn btn-outline-danger"
+                                data-modal-title="{$item['name']}"
+                                data-item-id="{$item['id']}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmDeleteModal"
+                            >
+                                <i class="bi bi-trash"></i>
                             </button>
                         </td>
                     </tr>
@@ -59,5 +67,6 @@
     </div>
 </main>
 
+{include 'partials/modals/confirm-delete.latte'}
 {include 'partials/footer.latte'}
 {/block}

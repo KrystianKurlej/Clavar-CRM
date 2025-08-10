@@ -21,6 +21,14 @@ $(document).ready(function () {
         const csrf = $(this).data('csrf');
         stopProject(projectId, csrf);
     });
+
+    $('.delete-modal-btn').on('click', function() {
+        const modalTitle = $(this).data('modal-title');
+        const itemId = $(this).data('item-id');
+        
+        $('#deleteModalTitle').text(modalTitle);
+        $('#confirmDeleteModal input[name="id"]').val(itemId);
+    });
 });
 
 function sendForm(method, form, endpoint, event, refresh, successModal, errorModal){
