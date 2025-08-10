@@ -51,6 +51,16 @@
                             </button>
                             <button
                                 type="button"
+                                class="edit-project-modal-btn btn btn-outline-secondary"
+                                data-project-title="{$item['name']}"
+                                data-item-id="{$item['id']}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editProjectModal"
+                            >
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button
+                                type="button"
                                 class="delete-modal-btn btn btn-outline-danger"
                                 data-modal-title="{$item['name']}"
                                 data-item-id="{$item['id']}"
@@ -68,5 +78,6 @@
 </main>
 
 {include 'partials/modals/confirm-delete.latte'}
+{include 'partials/modals/edit-project.latte'}
 {include 'partials/footer.latte'}
 {/block}

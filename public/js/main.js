@@ -29,6 +29,15 @@ $(document).ready(function () {
         $('#deleteModalTitle').text(modalTitle);
         $('#confirmDeleteModal input[name="id"]').val(itemId);
     });
+    
+    $('.edit-project-modal-btn').on('click', function() {
+        const projectTitle = $(this).data('project-title');
+        const itemId = $(this).data('item-id');
+        
+        $('#editModalTitle').text(projectTitle);
+        $('#editProjectName').val(projectTitle);
+        $('#editProjectModal input[name="id"]').val(itemId);
+    });
 });
 
 function sendForm(method, form, endpoint, event, refresh, successModal, errorModal){

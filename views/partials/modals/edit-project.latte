@@ -1,0 +1,34 @@
+<div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editProjectForm" class="form" method="POST" action="/ax_projects" data-refresh="true">
+        <div class="modal-header">
+          <h5 class="modal-title">Edytuj <i><span id="editModalTitle"></span></i></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body row">
+          <div class="mb-3 col-md-12">
+            <label for="editProjectName" class="form-label">Nazwa projektu</label>
+            <input type="text" class="form-control" id="editProjectName" name="name" required />
+          </div>
+          <div class="mb-3 col-md-6">
+            <label for="editProjectHours" class="form-label">Liczba godzin</label>
+            <input type="number" class="form-control" id="editProjectHours" name="hours" required />
+          </div>
+          <div class="mb-3 col-md-6">
+            <label for="editProjectMinutes" class="form-label">Liczba minut</label>
+            <input type="number" class="form-control" id="editProjectMinutes" name="minutes" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Anuluj</button>
+          <button type="submit" class="btn btn-primary" id="confirmEditButton">Zapisz</button>
+        </div>
+
+        <input type="hidden" name="id" value="" />
+        <input type="hidden" name="action" value="edit_project" />
+        <input type="hidden" name="_csrf" value="{csrfToken()}" />
+      </form>
+    </div>
+  </div>
+</div>  
