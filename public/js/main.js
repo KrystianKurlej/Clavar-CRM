@@ -12,14 +12,12 @@ $(document).ready(function () {
 
     $('.start-project').on('click', function() {
         const projectId = $(this).data('project-id');
-        const csrf = $(this).data('csrf');
-        startProject(projectId, csrf);
+        startProject(projectId);
     });
 
     $('.stop-project').on('click', function() {
         const projectId = $(this).data('project-id');
-        const csrf = $(this).data('csrf');
-        stopProject(projectId, csrf);
+        stopProject(projectId);
     });
 
     $('.delete-modal-btn').on('click', function() {
@@ -117,8 +115,9 @@ function updateProject(projectId, isRunning, time){
     tableRow.find('.project-time').text(time);
 }
 
-function startProject(projectId, csrf) {
+function startProject(projectId) {
     const formData = new FormData();
+    const csrf = $('.projects-table').data('csrf');
 
     formData.append('action', 'start_project');
     formData.append('_csrf', csrf);
@@ -140,8 +139,9 @@ function startProject(projectId, csrf) {
     })
 }
 
-function stopProject(projectId, csrf) {
+function stopProject(projectId) {
     const formData = new FormData();
+    const csrf = $('.projects-table').data('csrf');
 
     formData.append('action', 'stop_project');
     formData.append('_csrf', csrf);
