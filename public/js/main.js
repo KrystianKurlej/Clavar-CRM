@@ -84,6 +84,20 @@ function sendForm(method, form, endpoint, event, refresh, successModal, errorMod
     });
 }
 
+function updateProject(projectId, isRunning, time){
+    const tableRow = $('tr[data-project-id="' + projectId + '"]');
+
+    if (isRunning) {
+        tableRow.find('.stop-project').attr('disabled', false);
+        tableRow.find('.start-project').attr('disabled', true);
+    } else {
+        tableRow.find('.start-project').attr('disabled', false);
+        tableRow.find('.stop-project').attr('disabled', true);
+    }
+
+    tableRow.find('.project-time').text(time);
+}
+
 function startProject(projectId, csrf) {
     const formData = new FormData();
 
@@ -99,13 +113,7 @@ function startProject(projectId, csrf) {
         processData: false,
         url: '/ax_projects',
         success: function(response) {
-            if(response.running){
-                $('tr[data-project-id="' + projectId + '"] .stop-project').attr('disabled', false);
-                $('tr[data-project-id="' + projectId + '"] .start-project').attr('disabled', true);
-            } else {
-                $('tr[data-project-id="' + projectId + '"] .start-project').attr('disabled', false);
-                $('tr[data-project-id="' + projectId + '"] .stop-project').attr('disabled', true);
-            }
+            updateProject(projectId, response.running, response.total);
         },
         error: function(error) {
             console.error(error);
@@ -128,13 +136,7 @@ function stopProject(projectId, csrf) {
         processData: false,
         url: '/ax_projects',
         success: function(response) {
-            if(response.running){
-                $('tr[data-project-id="' + projectId + '"] .stop-project').attr('disabled', false);
-                $('tr[data-project-id="' + projectId + '"] .start-project').attr('disabled', true);
-            } else {
-                $('tr[data-project-id="' + projectId + '"] .start-project').attr('disabled', false);
-                $('tr[data-project-id="' + projectId + '"] .stop-project').attr('disabled', true);
-            }
+            updateProject(projectId, response.running, response.total);
         },
         error: function(error) {
             console.error(error);
