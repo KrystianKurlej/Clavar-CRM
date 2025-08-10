@@ -69,20 +69,48 @@ if (str_starts_with($path, '/api/')) {
     }
 
     if ($path === '/api/login' && $method === 'POST') {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
-        $_POST['_csrf'] = $input['_csrf'] ?? '';
-        $auth->checkCsrf();
-        $email = trim((string)($input['email'] ?? ''));
-        $password = (string)($input['password'] ?? '');
-        if ($auth->login($email, $password)) {
-            json(['ok' => true]);
+        $raw = file_get_contents('php://input');
+        $input = json_decode($raw, true);
+        $email = '';
+        $password = '';
+        if (is_array($input)) {
+            // JSON body
+            $_POST['_csrf'] = $input['_csrf'] ?? ($_POST['_csrf'] ?? '');
+            $email = trim((string)($input['email'] ?? ''));
+            $password = (string)($input['password'] ?? '');
+        } else {
+            // Form body
+            $_POST['_csrf'] = $_POST['_csrf'] ?? '';
+            $email = trim((string)($_POST['email'] ?? ''));
+            $password = (string)($_POST['password'] ?? '');
         }
-        json(['ok' => false, 'error' => 'Unauthorized'], 401);
+        $auth->checkCsrf();
+        if ($auth->login($email, $password)) {
+            if (is_array($input)) {
+                // JSON client
+                json(['ok' => true]);
+            } else {
+                // Form submit → redirect to projects
+                header('Location: /projects', true, 303);
+                exit;
+            }
+        }
+        if (is_array($input)) {
+            json(['ok' => false, 'error' => 'Unauthorized'], 401);
+        } else {
+            header('Location: /login?error=1', true, 303);
+            exit;
+        }
     }
 
     if ($path === '/api/logout' && $method === 'POST') {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
-        $_POST['_csrf'] = $input['_csrf'] ?? '';
+        $raw = file_get_contents('php://input');
+        $input = json_decode($raw, true);
+        if (is_array($input)) {
+            $_POST['_csrf'] = $input['_csrf'] ?? ($_POST['_csrf'] ?? '');
+        } else {
+            $_POST['_csrf'] = $_POST['_csrf'] ?? '';
+        }
         $auth->checkCsrf();
         $auth->logout();
         json(['ok' => true]);
