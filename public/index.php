@@ -16,6 +16,8 @@ require __DIR__ . '/../app/DB.php';
 // lightweight psr-4-less includes for our simple OOP structure
 @require __DIR__ . '/../app/Repositories/ProjectRepository.php';
 @require __DIR__ . '/../app/Controllers/Ajax/ProjectsController.php';
+@require __DIR__ . '/../app/Controllers/Api/ProjectsApiController.php';
+@require __DIR__ . '/../app/Controllers/Pages/ProjectsPageController.php';
 
 date_default_timezone_set($config['timezone']);
 ensure_dir($config['data_dir']);
@@ -142,63 +144,12 @@ if (str_starts_with($path, '/api/')) {
 
     // Projects API (auth required)
     if (str_starts_with($path, '/api/projects')) {
-        if (!$auth->isLoggedIn()) { json(['ok' => false, 'error' => 'Unauthorized'], 401); }
-    $user = $auth->user();
-    $pdo = DB::connect($user['db_path']);
-    DB::ensureSchema($pdo);
-    $projRepo = class_exists('ProjectRepository') ? new ProjectRepository() : null;
-
-        // GET /api/projects -> list non-archived (+ running state)
-        if ($path === '/api/projects' && $method === 'GET') {
-            $rows = $projRepo ? $projRepo->listActive($pdo) : (function($pdo){ $stmt = $pdo->query('SELECT id, name, archived, created_at FROM projects WHERE archived = 0 ORDER BY created_at DESC'); return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []; })($pdo);
-            if ($projRepo) {
-                foreach ($rows as &$r) {
-                    $r['running'] = $projRepo->isRunning($pdo, (int)$r['id']);
-                }
-                unset($r);
-            }
-            json(['ok' => true, 'projects' => $rows]);
-        }
-
-        // POST /api/projects -> create { name }
-        if ($path === '/api/projects' && $method === 'POST') {
-            $input = json_decode(file_get_contents('php://input'), true) ?? [];
-            $_POST['_csrf'] = $input['_csrf'] ?? '';
-            $auth->checkCsrf();
-            $name = trim((string)($input['name'] ?? ''));
-            if ($name === '') { json(['ok' => false, 'error' => 'Name required'], 422); }
-            if ($projRepo) { $id = $projRepo->create($pdo, $name); }
-            else { $stmt = $pdo->prepare('INSERT INTO projects(name) VALUES(:name)'); $stmt->execute([':name' => $name]); $id = (int)$pdo->lastInsertId(); }
-            json(['ok' => true, 'id' => $id]);
-        }
-
-        // PUT /api/projects/{id} -> update name or archived
-        if (preg_match('#^/api/projects/(\d+)$#', $path, $m) && $method === 'PUT') {
-            $id = (int)$m[1];
-            $input = json_decode(file_get_contents('php://input'), true) ?? [];
-            $_POST['_csrf'] = $input['_csrf'] ?? '';
-            $auth->checkCsrf();
-            $fields = [];
-            $params = [':id' => $id];
-            if (array_key_exists('name', $input)) { $fields[] = 'name = :name'; $params[':name'] = trim((string)$input['name']); }
-            if (array_key_exists('archived', $input)) { $fields[] = 'archived = :archived'; $params[':archived'] = (int)!!$input['archived']; }
-            if (!$fields) { json(['ok' => false, 'error' => 'No changes'], 400); }
-            $sql = 'UPDATE projects SET ' . implode(', ', $fields) . ' WHERE id = :id';
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
-            json(['ok' => true]);
-        }
-
-        // DELETE /api/projects/{id}
-        if (preg_match('#^/api/projects/(\d+)$#', $path, $m) && $method === 'DELETE') {
-            $id = (int)$m[1];
-            $input = json_decode(file_get_contents('php://input'), true) ?? [];
-            $_POST['_csrf'] = $input['_csrf'] ?? '';
-            $auth->checkCsrf();
-            if ($projRepo) { $projRepo->delete($pdo, $id); }
-            else { $stmt = $pdo->prepare('DELETE FROM projects WHERE id = :id'); $stmt->execute([':id' => $id]); }
-            json(['ok' => true]);
-        }
+        $api = class_exists('ProjectsApiController') ? new ProjectsApiController($auth) : null;
+        if (!$api) { json(['ok' => false, 'error' => 'Controller missing'], 500); }
+        if ($path === '/api/projects' && $method === 'GET') { $api->list(); }
+        if ($path === '/api/projects' && $method === 'POST') { $api->create(); }
+        if (preg_match('#^/api/projects/(\d+)$#', $path, $m) && $method === 'PUT') { $api->update((int)$m[1]); }
+        if (preg_match('#^/api/projects/(\d+)$#', $path, $m) && $method === 'DELETE') { $api->delete((int)$m[1]); }
     }
 }
 
@@ -247,22 +198,9 @@ if ($path === '/login') {
 
 // Projects page (auth required)
 if ($path === '/projects') {
-    if (!$auth->isLoggedIn()) { redirect('/login'); }
-    $user = $auth->user();
-    $pdo = DB::connect($user['db_path']);
-    DB::ensureSchema($pdo);
-    $projRepo = class_exists('ProjectRepository') ? new ProjectRepository() : null;
-    $projects = $projRepo ? $projRepo->listActive($pdo) : (function($pdo){ $stmt = $pdo->query('SELECT id, name, archived, created_at FROM projects WHERE archived = 0 ORDER BY created_at DESC'); return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []; })($pdo);
-    // enrich with totals & running state
-    if ($projRepo) {
-        foreach ($projects as &$p) {
-            $secs = $projRepo->totalSeconds($pdo, (int)$p['id']);
-            $p['total'] = $projRepo->formatHHMM($secs);
-            $p['running'] = $projRepo->isRunning($pdo, (int)$p['id']);
-        }
-        unset($p);
-    }
-    render($latte, 'projects', ['projects' => $projects]);
+    $page = class_exists('ProjectsPageController') ? new ProjectsPageController($auth, $latte, $views) : null;
+    if (!$page) { http_response_code(500); echo 'Controller missing'; exit; }
+    $page->show();
     exit;
 }
 
