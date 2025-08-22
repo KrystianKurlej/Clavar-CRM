@@ -18,7 +18,7 @@
 </header>
 
 <main class="container my-2">
-    <div class="bg-body p-3 rounded">
+    <section class="bg-body p-3 rounded">
         <table class="projects-table table table-hover" data-csrf="{csrfToken()}">
             <tbody>
                 {foreach $projects as $item}
@@ -61,6 +61,16 @@
                             </button>
                             <button
                                 type="button"
+                                class="archive-modal-btn btn btn-outline-secondary"
+                                data-modal-title="{$item['name']}"
+                                data-item-id="{$item['id']}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmArchiveModal"
+                            >
+                                <i class="bi bi-archive"></i>
+                            </button>
+                            <button
+                                type="button"
                                 class="delete-modal-btn btn btn-outline-danger"
                                 data-modal-title="{$item['name']}"
                                 data-item-id="{$item['id']}"
@@ -74,10 +84,39 @@
                 {/foreach}
             </tbody>
         </table>
-    </div>
+    </section>
+
+    <section class="p-3">
+        <p class="text-muted text-center mt-3">Zarchiwizowane projekty</p>
+        <table class="projects-table table table-hover" data-csrf="{csrfToken()}">
+            <tbody>
+                {foreach $projects as $item}
+                    <tr class="project-row" data-project-id="{$item['id']}">
+                        <td class="bg-light align-middle">{$item['name']}</td>
+                        <td class="bg-light align-middle">
+                            <span class="project-time">{$item['total']}</span>
+                        </td>
+                        <td class="bg-light d-flex gap-2 align-items-center justify-content-end">
+                            <button
+                                type="button"
+                                class="delete-modal-btn btn btn-outline-danger"
+                                data-modal-title="{$item['name']}"
+                                data-item-id="{$item['id']}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmDeleteModal"
+                            >
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                {/foreach}
+            </tbody>
+        </table>
+    </section>
 </main>
 
 {include '../partials/modals/confirm-delete.latte'}
+{include '../partials/modals/confirm-archive.latte'}
 {include '../partials/modals/edit-project.latte'}
 {include '../partials/footer.latte'}
 {/block}

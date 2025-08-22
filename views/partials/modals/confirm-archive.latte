@@ -1,0 +1,20 @@
+<div class="modal fade" id="confirmArchiveModal" tabindex="-1" aria-labelledby="confirmArchiveModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="archiveProjectForm" class="form" method="POST" action="/ax_projects" data-refresh="true">
+        <div class="modal-header">
+          <h5 class="modal-title">Archiwizować <i><span id="archiveModalTitle"></span></i>?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Anuluj</button>
+          <button type="submit" class="btn btn-primary" id="confirmArchiveButton">Archiwizuj</button>
+        </div>
+
+        <input type="hidden" name="id" value="" />
+        <input type="hidden" name="action" value="archive_project" />
+        <input type="hidden" name="_csrf" value="{csrfToken()}" />
+      </form>
+    </div>
+  </div>
+</div>

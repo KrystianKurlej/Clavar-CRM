@@ -27,6 +27,14 @@ $(document).ready(function () {
         $('#deleteModalTitle').text(modalTitle);
         $('#confirmDeleteModal input[name="id"]').val(itemId);
     });
+
+    $('.archive-modal-btn').on('click', function() {
+        const modalTitle = $(this).data('modal-title');
+        const itemId = $(this).data('item-id');
+
+        $('#archiveModalTitle').text(modalTitle);
+        $('#confirmArchiveModal input[name="id"]').val(itemId);
+    });
     
     $('.edit-project-modal-btn').on('click', function() {
         const projectTitle = $(this).data('project-title');
