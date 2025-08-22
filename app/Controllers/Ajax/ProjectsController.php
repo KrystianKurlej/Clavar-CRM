@@ -58,7 +58,7 @@ final class ProjectsController
                     $id = (int)($_POST['id'] ?? 0);
                     if ($id <= 0) { json(['status' => 'error', 'message' => 'ID wymagane'], 422); }
                     $repo->archive($this->pdo(), $id);
-                    json(['status' => 'success']);
+                    json(['status' => 'success', 'archived' => 1]);
                     break;
                 case 'delete_project':
                     $id = (int)($_POST['id'] ?? 0);

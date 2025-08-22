@@ -10,6 +10,12 @@ class ProjectRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function listArchived(PDO $pdo): array
+    {
+        $stmt = $pdo->query('SELECT id, name, archived, created_at FROM projects WHERE archived = 1 ORDER BY created_at DESC');
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function create(PDO $pdo, string $name): int
     {
         $stmt = $pdo->prepare('INSERT INTO projects(name) VALUES(:name)');

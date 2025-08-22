@@ -28,6 +28,13 @@ final class ProjectsPageController
             $p['running'] = $repo->isRunning($pdo, (int)$p['id']);
         }
         unset($p);
+        $archived = $repo->listArchived($pdo);
+        foreach ($archived as &$a) {
+            $secs = $repo->totalSeconds($pdo, (int)$a['id']);
+            $a['total'] = $repo->formatHHMM($secs);
+            $a['running'] = false; // archived projects cannot run
+        }
+        unset($a);
         // helper
         if (!function_exists('csrfToken')) {
             function csrfToken(): string { global $auth; return $auth->csrfToken(); }
@@ -37,6 +44,7 @@ final class ProjectsPageController
             'me' => $this->auth->user(),
             'presenterPath' => '/projects',
             'projects' => $projects,
+            'archivedProjects' => $archived,
         ];
     $this->latte->render($this->viewsDir . '/projects/main.latte', $params);
     }
