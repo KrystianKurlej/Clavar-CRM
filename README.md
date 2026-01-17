@@ -1,40 +1,40 @@
 # Clavar CRM
 
-Prosty, samodzielny system CRM (Customer Relationship Management) do zarządzania projektami i śledzenia czasu pracy. System został zaprojektowany z myślą o prostocie, łatwości instalacji i minimalnych wymaganiach technicznych.
+A simple, self-hosted CRM (Customer Relationship Management) system for project management and time tracking. The system is designed with simplicity, ease of installation, and minimal technical requirements in mind.
 
 
-## Funkcjonalności
+## Features
 
-### Zarządzanie projektami
-- Tworzenie, edycja i usuwanie projektów
-- Archiwizacja projektów
-- Śledzenie czasu pracy w czasie rzeczywistym (timer start/stop)
-- Ręczne ustawianie czasu bazowego dla projektów
-- Automatyczne sumowanie czasu pracy
+### Project Management
+- Create, edit, and delete projects
+- Archive projects
+- Real-time work time tracking (start/stop timer)
+- Manual base time setting for projects
+- Automatic work time summation
 
-### Raporty
-- Generowanie raportów czasowych dla wybranych projektów
-- Kalkulacja kosztów na podstawie stawki godzinowej
-- Eksport danych w formacie JSON
-- Historia wszystkich raportów
+### Reports
+- Generate time reports for selected projects
+- Cost calculation based on hourly rate
+- Export data in JSON format
+- History of all reports
 
-### System użytkowników
-- Wielousługowość - każdy użytkownik ma własną bazę danych SQLite
-- Bezpieczna autentykacja z hashowaniem haseł (bcrypt)
-- Ochrona CSRF dla wszystkich formularzy
-- Sesje z konfigurowalnymi parametrami bezpieczeństwa
+### User System
+- Multi-user support - each user has their own SQLite database
+- Secure authentication with password hashing (bcrypt)
+- CSRF protection for all forms
+- Sessions with configurable security parameters
 
-## Techniczne
-- Lekka, bezserwerowa architektura (SQLite)
-- Responsywny interfejs użytkownika (Bootstrap 5)
-- System szablonów Latte
-- AJAX do dynamicznych operacji
-- REST API dla integracji zewnętrznych
-- Gotowy do uruchomienia w kontenerze
+## Technical
+- Lightweight, serverless architecture (SQLite)
+- Responsive user interface (Bootstrap 5)
+- Latte template system
+- AJAX for dynamic operations
+- REST API for external integrations
+- Ready to run in a container
 
-## Struktura kodu
+## Code Structure
 
-- **PSR-4 lite**: Klasy są ładowane ręcznie w [public/index.php](public/index.php#L16-L21)
-- **MVC pattern**: Kontrolery, repozytoria, widoki
-- **Repository pattern**: Dostęp do danych przez dedykowane klasy
-- **Template engine**: Latte 3.x dla widoków
+- **PSR-4 lite**: Classes are loaded manually in [public/index.php](public/index.php#L16-L21)
+- **MVC pattern**: Controllers, repositories, views
+- **Repository pattern**: Data access through dedicated classes
+- **Template engine**: Latte 3.x for views
