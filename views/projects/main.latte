@@ -102,6 +102,14 @@
                             <td class="bg-light d-flex gap-2 align-items-center justify-content-end">
                                 <button
                                     type="button"
+                                    class="unarchive-project btn btn-outline-primary"
+                                    data-project-id="{$item['id']}"
+                                    title="Przywróć projekt"
+                                >
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                                <button
+                                    type="button"
                                     class="delete-modal-btn btn btn-outline-danger"
                                     data-modal-title="{$item['name']}"
                                     data-item-id="{$item['id']}"

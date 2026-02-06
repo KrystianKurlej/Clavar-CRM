@@ -29,6 +29,12 @@ class ProjectRepository
         $stmt->execute([':id' => $id]);
     }
 
+    public function unarchive(PDO $pdo, int $id): void
+    {
+        $stmt = $pdo->prepare('UPDATE projects SET archived = 0 WHERE id = :id');
+        $stmt->execute([':id' => $id]);
+    }
+
     public function delete(PDO $pdo, int $id): void
     {
         $stmt = $pdo->prepare('DELETE FROM projects WHERE id = :id');

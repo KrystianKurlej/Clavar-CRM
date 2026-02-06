@@ -60,6 +60,12 @@ final class ProjectsController
                     $repo->archive($this->pdo(), $id);
                     json(['status' => 'success', 'archived' => 1]);
                     break;
+                case 'unarchive_project':
+                    $id = (int)($_POST['id'] ?? 0);
+                    if ($id <= 0) { json(['status' => 'error', 'message' => 'ID wymagane'], 422); }
+                    $repo->unarchive($this->pdo(), $id);
+                    json(['status' => 'success', 'archived' => 0]);
+                    break;
                 case 'delete_project':
                     $id = (int)($_POST['id'] ?? 0);
                     if ($id <= 0) { json(['status' => 'error', 'message' => 'ID wymagane'], 422); }

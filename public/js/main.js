@@ -20,6 +20,11 @@ $(document).ready(function () {
         stopProject(projectId);
     });
 
+    $('.unarchive-project').on('click', function() {
+        const projectId = $(this).data('project-id');
+        unarchiveProject(projectId);
+    });
+
     $('.delete-modal-btn').on('click', function() {
         const modalTitle = $(this).data('modal-title');
         const itemId = $(this).data('item-id');
@@ -167,6 +172,33 @@ function stopProject(projectId) {
         },
         error: function(error) {
             console.error(error);
+        }
+    })
+}
+
+function unarchiveProject(projectId) {
+    const formData = new FormData();
+    const csrf = $('.projects-table').data('csrf');
+
+    formData.append('action', 'unarchive_project');
+    formData.append('_csrf', csrf);
+    formData.append('id', projectId);
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'json',
+        data: formData,
+        contentType: false,
+        processData: false,
+        url: '/ax_projects',
+        success: function(response) {
+            if (response.status === 'success') {
+                location.reload();
+            }
+        },
+        error: function(error) {
+            console.error(error);
+            alert('Wystąpił błąd podczas przywracania projektu');
         }
     })
 }
