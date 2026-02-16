@@ -16,10 +16,13 @@ require __DIR__ . '/../app/DB.php';
 // lightweight psr-4-less includes for our simple OOP structure
 @require __DIR__ . '/../app/Repositories/ProjectRepository.php';
 @require __DIR__ . '/../app/Repositories/ReportRepository.php';
+@require __DIR__ . '/../app/Repositories/RecordRepository.php';
 @require __DIR__ . '/../app/Controllers/Ajax/ProjectsController.php';
+@require __DIR__ . '/../app/Controllers/Ajax/RecordsController.php';
 @require __DIR__ . '/../app/Controllers/Api/ProjectsApiController.php';
 @require __DIR__ . '/../app/Controllers/Pages/ProjectsPageController.php';
 @require __DIR__ . '/../app/Controllers/Pages/ReportsPageController.php';
+@require __DIR__ . '/../app/Controllers/Pages/RecordsPageController.php';
 
 date_default_timezone_set($config['timezone']);
 ensure_dir($config['data_dir']);
@@ -261,6 +264,14 @@ if ($path === '/reports') {
     exit;
 }
 
+// Records page (auth required)
+if ($path === '/record') {
+    $page = class_exists('RecordsPageController') ? new RecordsPageController($auth, $latte, $views) : null;
+    if (!$page) { http_response_code(500); echo 'Controller missing'; exit; }
+    $page->show();
+    exit;
+}
+
 // Report detail page (auth required)
 if (preg_match('#^/reports/(\d+)$#', $path, $m)) {
     $page = class_exists('ReportsPageController') ? new ReportsPageController($auth, $latte, $views) : null;
@@ -276,6 +287,17 @@ if ($path === '/ax_projects' && $method === 'POST') {
         $controller->handle();
     } else {
         // Fallback: preserve existing behavior if controller not available
+        if (!$auth->isLoggedIn()) { json(['status' => 'error', 'message' => 'Unauthorized']); }
+        $auth->checkCsrf();
+        json(['status' => 'error', 'message' => 'Controller missing'], 500);
+    }
+}
+
+if ($path === '/ax_records' && $method === 'POST') {
+    if (class_exists('RecordsController')) {
+        $controller = new RecordsController($auth);
+        $controller->handle();
+    } else {
         if (!$auth->isLoggedIn()) { json(['status' => 'error', 'message' => 'Unauthorized']); }
         $auth->checkCsrf();
         json(['status' => 'error', 'message' => 'Controller missing'], 500);

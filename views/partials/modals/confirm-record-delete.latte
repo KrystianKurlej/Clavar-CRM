@@ -1,0 +1,20 @@
+<div class="modal fade" id="confirmRecordDeleteModal" tabindex="-1" aria-labelledby="confirmRecordDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="deleteRecordForm" class="form" method="POST" action="/ax_records" data-refresh="true">
+        <div class="modal-header">
+          <h5 class="modal-title">Usunąć <i><span id="deleteRecordModalTitle"></span></i>?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Anuluj</button>
+          <button type="submit" class="btn btn-danger" id="confirmRecordDeleteButton">Usuń</button>
+        </div>
+
+        <input type="hidden" name="id" value="" />
+        <input type="hidden" name="action" value="delete_record" />
+        <input type="hidden" name="_csrf" value="{csrfToken()}" />
+      </form>
+    </div>
+  </div>
+</div>

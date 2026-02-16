@@ -1,0 +1,46 @@
+<div class="modal fade" id="editRecordModal" tabindex="-1" aria-labelledby="editRecordModal" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="editRecordForm" class="form" method="POST" action="/ax_records" data-refresh="true">
+        <div class="modal-header">
+          <h5 class="modal-title">Edytuj wpis</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body row g-2">
+          <div class="col-12 col-md-4">
+            <label for="editRecordDate" class="form-label">Data</label>
+            <input type="date" class="form-control" id="editRecordDate" name="sale_date" required />
+          </div>
+          <div class="col-12 col-md-8">
+            <label for="editRecordDescription" class="form-label">Opis usługi/klient</label>
+            <input type="text" class="form-control" id="editRecordDescription" name="description" required />
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="editRecordAmount" class="form-label">Kwota netto</label>
+            <input type="text" class="form-control" id="editRecordAmount" name="net_amount" required />
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="editRecordPayment" class="form-label">Forma płatn.</label>
+            <input type="text" class="form-control" id="editRecordPayment" name="payment_method" />
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="editRecordDoc" class="form-label">Nr dok.</label>
+            <input type="text" class="form-control" id="editRecordDoc" name="document_no" />
+          </div>
+          <div class="col-12">
+            <label for="editRecordNotes" class="form-label">Uwagi</label>
+            <input type="text" class="form-control" id="editRecordNotes" name="notes" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Anuluj</button>
+          <button type="submit" class="btn btn-primary" id="confirmEditRecordButton">Zapisz</button>
+        </div>
+
+        <input type="hidden" name="id" value="" />
+        <input type="hidden" name="action" value="edit_record" />
+        <input type="hidden" name="_csrf" value="{csrfToken()}" />
+      </form>
+    </div>
+  </div>
+</div>

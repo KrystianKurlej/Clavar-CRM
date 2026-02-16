@@ -1,0 +1,219 @@
+{layout '../layout.latte'}
+
+{block title}Ewidencja{/block}
+
+{block content}
+{include '../partials/nav.latte'}
+
+<main class="container my-3">
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-4">
+            <section class="bg-body p-3 rounded h-100">
+                <h1 class="h5 mb-3">Dashboard</h1>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <tbody>
+                            <tr>
+                                <td class="fw-semibold">Aktualny kwartał</td>
+                                <td class="text-end"><strong>{$dashboard['current_quarter']}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Przychód YTD (od styczeń)</td>
+                                <td class="text-end"><strong>{$dashboard['ytd_total_cents']|pln} PLN</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Dni do końca kwartału ({$dashboard['quarter_end_label']})</td>
+                                <td class="text-end"><strong>{$dashboard['days_to_end_quarter']} dni</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Średnio dziennie</td>
+                                <td class="text-end"><strong>{$dashboard['avg_per_day_cents']|pln} PLN</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Największy klient</td>
+                                <td class="text-end">
+                                    {if $dashboard['biggest_label']}
+                                        <strong>{$dashboard['biggest_label']}: {$dashboard['biggest_amount_cents']|pln} PLN</strong>
+                                    {else}
+                                        <span class="text-muted">Brak danych</span>
+                                    {/if}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+        <div class="col-12 col-lg-8">
+            <section class="bg-body p-3 rounded h-100">
+                <h2 class="h5 mb-3">Podsumowanie kwartalne</h2>
+
+                <form id="updateLimitsForm" class="form mb-3" method="POST" action="/ax_records" data-refresh="true">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small text-muted" for="limitQ1">Limit Q1</label>
+                            <input id="limitQ1" class="form-control form-control-sm" name="limit_q1" value="{ifset $limits[1]}{$limits[1]|pln}{/ifset}" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted" for="limitQ2">Limit Q2</label>
+                            <input id="limitQ2" class="form-control form-control-sm" name="limit_q2" value="{ifset $limits[2]}{$limits[2]|pln}{/ifset}" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted" for="limitQ3">Limit Q3</label>
+                            <input id="limitQ3" class="form-control form-control-sm" name="limit_q3" value="{ifset $limits[3]}{$limits[3]|pln}{/ifset}" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted" for="limitQ4">Limit Q4</label>
+                            <input id="limitQ4" class="form-control form-control-sm" name="limit_q4" value="{ifset $limits[4]}{$limits[4]|pln}{/ifset}" />
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-2">
+                        <input type="hidden" name="action" value="update_limits" />
+                        <input type="hidden" name="year" value="{$selectedYear}" />
+                        <input type="hidden" name="_csrf" value="{csrfToken()}" />
+                        <button class="btn btn-outline-secondary btn-sm" type="submit">Zapisz limity</button>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Kwartal</th>
+                                <th>Przychody</th>
+                                <th>Limit Q</th>
+                                <th>Pozostało</th>
+                                <th>% wykorzystania</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {foreach $summaryRows as $row}
+                                <tr>
+                                    <td>{$row['quarter']}</td>
+                                    <td>{$row['total_cents']|pln}</td>
+                                    <td>{$row['limit_cents']|pln}</td>
+                                    <td>{$row['remaining_cents']|pln} PLN</td>
+                                    <td>{$row['percent']}%</td>
+                                    <td>{$row['status']}</td>
+                                </tr>
+                            {/foreach}
+                        </tbody>
+                        <tfoot>
+                            <tr class="fw-semibold">
+                                <td>RAZEM</td>
+                                <td>{$summaryTotal['total_cents']|pln}</td>
+                                <td>{$summaryTotal['limit_cents']|pln}</td>
+                                <td>{$summaryTotal['remaining_cents']|pln} PLN</td>
+                                <td>{$summaryTotal['percent']}%</td>
+                                <td>{$summaryTotal['status']}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <section class="bg-body p-3 rounded">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 class="h5 mb-0">Ewidencja Sprzedaży {$selectedYear}</h2>
+        </div>
+
+                <form id="createRecordForm" class="form row g-2 mb-3" method="POST" action="/ax_records" data-refresh="true">
+                    <div class="col-12 col-md-4">
+                        <input type="date" class="form-control" name="sale_date" required />
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <input type="text" class="form-control" name="description" placeholder="Opis usługi/klient" required />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <input type="text" class="form-control" name="net_amount" placeholder="Kwota netto (PLN)" required />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <input type="text" class="form-control" name="payment_method" placeholder="Forma płatn." />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <input type="text" class="form-control" name="document_no" placeholder="Nr dok." />
+                    </div>
+                    <div class="col-12">
+                        <input type="text" class="form-control" name="notes" placeholder="Uwagi" />
+                    </div>
+                    <div class="col-12 d-flex justify-content-end">
+                        <input type="hidden" name="action" value="create_record" />
+                        <input type="hidden" name="_csrf" value="{csrfToken()}" />
+                        <button class="btn btn-primary" type="submit">Dodaj wpis</button>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Lp.</th>
+                                <th>Data</th>
+                                <th>Opis usługi/klient</th>
+                                <th>Kwota netto</th>
+                                <th>Forma płatn.</th>
+                                <th>Nr dok.</th>
+                                <th>Kwartał</th>
+                                <th>Uwagi</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {if count($records)}
+                                {foreach $records as $item}
+                                    <tr
+                                        data-record-id="{$item['id']}"
+                                        data-record-date="{$item['sale_date']}"
+                                        data-record-desc="{$item['description']}"
+                                        data-record-amount="{$item['net_amount_cents']|pln}"
+                                        data-record-amount-raw="{$item['net_amount_cents'] / 100}"
+                                        data-record-payment="{$item['payment_method']}"
+                                        data-record-doc="{$item['document_no']}"
+                                        data-record-notes="{$item['notes']}"
+                                    >
+                                        <td>{$iterator->counter}</td>
+                                        <td>{$item['sale_date']|date_pl}</td>
+                                        <td>{$item['description']}</td>
+                                        <td>{$item['net_amount_cents']|pln} PLN</td>
+                                        <td>{$item['payment_method']}</td>
+                                        <td>{$item['document_no']}</td>
+                                        <td>{$item['quarter_label']}</td>
+                                        <td>{$item['notes']}</td>
+                                        <td class="text-end">
+                                            <button
+                                                type="button"
+                                                class="edit-record-modal-btn btn btn-outline-secondary btn-sm"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editRecordModal"
+                                            >
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="delete-record-modal-btn btn btn-outline-danger btn-sm"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#confirmRecordDeleteModal"
+                                            >
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {/foreach}
+                            {else}
+                                <tr>
+                                    <td class="text-muted text-center" colspan="9">Brak wpisów</td>
+                                </tr>
+                            {/if}
+                        </tbody>
+                    </table>
+                </div>
+    </section>
+</main>
+
+{include '../partials/modals/confirm-record-delete.latte'}
+{include '../partials/modals/edit-record.latte'}
+{include '../partials/footer.latte'}
+{/block}

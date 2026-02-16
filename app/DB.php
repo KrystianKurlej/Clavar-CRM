@@ -76,5 +76,30 @@ class DB
             )'
         );
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_report_projects_report ON report_projects(report_id)');
+
+        // Sales records (ewidencja)
+        $pdo->exec(
+            'CREATE TABLE IF NOT EXISTS sales_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sale_date TEXT NOT NULL,
+                description TEXT NOT NULL,
+                net_amount_cents INTEGER NOT NULL DEFAULT 0,
+                payment_method TEXT,
+                document_no TEXT,
+                notes TEXT,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )'
+        );
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_sales_records_date ON sales_records(sale_date DESC)');
+
+        // Quarterly limits for ewidencja
+        $pdo->exec(
+            'CREATE TABLE IF NOT EXISTS record_limits (
+                year INTEGER NOT NULL,
+                quarter INTEGER NOT NULL,
+                limit_cents INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY(year, quarter)
+            )'
+        );
     }
 }

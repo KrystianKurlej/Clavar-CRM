@@ -49,6 +49,27 @@ $(document).ready(function () {
         $('#editProjectName').val(projectTitle);
         $('#editProjectModal input[name="id"]').val(itemId);
     });
+
+    $('.delete-record-modal-btn').on('click', function() {
+        const row = $(this).closest('tr');
+        const recordTitle = row.data('record-desc');
+        const recordId = row.data('record-id');
+
+        $('#deleteRecordModalTitle').text(recordTitle || 'wpis');
+        $('#confirmRecordDeleteModal input[name="id"]').val(recordId);
+    });
+
+    $('.edit-record-modal-btn').on('click', function() {
+        const row = $(this).closest('tr');
+        $('#editRecordDate').val(row.data('record-date') || '');
+        $('#editRecordDescription').val(row.data('record-desc') || '');
+        const amountRaw = row.data('record-amount-raw');
+        $('#editRecordAmount').val((amountRaw !== undefined && amountRaw !== null) ? amountRaw : (row.data('record-amount') || ''));
+        $('#editRecordPayment').val(row.data('record-payment') || '');
+        $('#editRecordDoc').val(row.data('record-doc') || '');
+        $('#editRecordNotes').val(row.data('record-notes') || '');
+        $('#editRecordModal input[name="id"]').val(row.data('record-id'));
+    });
 });
 
 function sendForm(method, form, endpoint, event, refresh, successModal, errorModal){
