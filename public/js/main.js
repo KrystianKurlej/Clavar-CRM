@@ -65,6 +65,8 @@ $(document).ready(function () {
         $('#editRecordDescription').val(row.data('record-desc') || '');
         const amountRaw = row.data('record-amount-raw');
         $('#editRecordAmount').val((amountRaw !== undefined && amountRaw !== null) ? amountRaw : (row.data('record-amount') || ''));
+        const kupRaw = row.data('record-kup-raw');
+        $('#editRecordCostOfIncome').val((kupRaw !== undefined && kupRaw !== null) ? kupRaw : '');
         $('#editRecordPayment').val(row.data('record-payment') || '');
         $('#editRecordDoc').val(row.data('record-doc') || '');
         $('#editRecordNotes').val(row.data('record-notes') || '');

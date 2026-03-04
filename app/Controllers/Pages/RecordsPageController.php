@@ -53,9 +53,21 @@ final class RecordsPageController
         }
 
         $repo = new RecordRepository();
-        $records = $repo->listAll($pdo);
+        $allYears = $repo->availableYears($pdo);
+        $currentYear = (int)date('Y');
+        if (!in_array($currentYear, $allYears, true)) {
+            $allYears[] = $currentYear;
+        }
+        rsort($allYears);
 
-        $selectedYear = $repo->maxYear($pdo) ?? (int)date('Y');
+        $requestedYear = (int)($_GET['year'] ?? 0);
+        $selectedYear = $requestedYear > 0 ? $requestedYear : ($allYears[0] ?? $currentYear);
+        if (!in_array($selectedYear, $allYears, true)) {
+            $allYears[] = $selectedYear;
+            rsort($allYears);
+        }
+
+        $records = $repo->listByYear($pdo, $selectedYear);
         $limits = $repo->getLimits($pdo, $selectedYear);
 
         $quarterTotals = [1 => 0, 2 => 0, 3 => 0, 4 => 0];
@@ -63,9 +75,7 @@ final class RecordsPageController
             $year = (int)date('Y', strtotime($r['sale_date']));
             $q = $this->quarterFromDate($r['sale_date']);
             $r['quarter_label'] = $this->quarterLabel($year, $q);
-            if ($year === $selectedYear) {
-                $quarterTotals[$q] += (int)$r['net_amount_cents'];
-            }
+            $quarterTotals[$q] += (int)$r['net_amount_cents'];
         }
         unset($r);
 
@@ -106,57 +116,36 @@ final class RecordsPageController
         ];
 
         $today = new DateTimeImmutable('today');
-        $currentYear = (int)$today->format('Y');
-        $currentQuarter = (int)ceil(((int)$today->format('n')) / 3);
-        $quarterStart = $this->quarterStart($currentYear, $currentQuarter);
-        $quarterEnd = $this->quarterEnd($currentYear, $currentQuarter);
+        $isCurrentYear = $selectedYear === (int)$today->format('Y');
+        $currentQuarter = $isCurrentYear ? (int)ceil(((int)$today->format('n')) / 3) : 4;
+        $quarterStart = $this->quarterStart($selectedYear, $currentQuarter);
+        $quarterEnd = $this->quarterEnd($selectedYear, $currentQuarter);
 
-        $currentQuarterTotal = 0;
         $ytdTotal = 0;
-        $biggest = null;
-        $yearStart = new DateTimeImmutable(sprintf('%04d-01-01', $currentYear));
+        $ytdCostOfIncome = 0;
+        $yearStart = new DateTimeImmutable(sprintf('%04d-01-01', $selectedYear));
+        $yearEnd = new DateTimeImmutable(sprintf('%04d-12-31', $selectedYear));
+        $dashboardCutoff = $isCurrentYear ? $today : $yearEnd;
 
         foreach ($records as $r) {
             $date = new DateTimeImmutable($r['sale_date']);
             $amount = (int)$r['net_amount_cents'];
-            if ($date >= $yearStart && $date <= $today) {
+            $cost = (int)($r['cost_of_income_cents'] ?? 0);
+            if ($date >= $yearStart && $date <= $dashboardCutoff) {
                 $ytdTotal += $amount;
-                if (!$biggest || $amount > $biggest['amount']) {
-                    $biggest = [
-                        'label' => $r['description'],
-                        'amount' => $amount,
-                    ];
-                }
-            }
-            if ($date >= $quarterStart && $date <= $today) {
-                $currentQuarterTotal += $amount;
+                $ytdCostOfIncome += $cost;
             }
         }
 
-        $diffToEnd = $today->diff($quarterEnd);
+        $diffToEnd = $dashboardCutoff->diff($quarterEnd);
         $daysToEndQuarter = $diffToEnd->invert ? 0 : (int)$diffToEnd->days;
-        $daysElapsedQuarter = (int)$quarterStart->diff($today)->days + 1;
-        if ($today < $quarterStart) {
-            $daysElapsedQuarter = 0;
-        }
-        $avgPerDay = $daysElapsedQuarter > 0 ? ($currentQuarterTotal / $daysElapsedQuarter) : 0.0;
-        $currentLimit = $limits[$currentQuarter] ?? 0;
-        $daysToLimit = 0;
-        if ($currentLimit > 0 && $avgPerDay > 0 && $currentQuarterTotal < $currentLimit) {
-            $daysToLimit = (int)ceil(($currentLimit - $currentQuarterTotal) / $avgPerDay);
-        }
 
         $dashboard = [
-            'current_quarter' => $this->quarterLabel($currentYear, $currentQuarter),
+            'current_quarter' => $this->quarterLabel($selectedYear, $currentQuarter),
             'ytd_total_cents' => $ytdTotal,
+            'ytd_kup_cents' => $ytdCostOfIncome,
             'quarter_end_label' => $quarterEnd->format('d.m'),
             'days_to_end_quarter' => $daysToEndQuarter,
-            'avg_per_day_cents' => (int)round($avgPerDay),
-            'days_to_limit' => $daysToLimit,
-            'limit_alarm' => $currentLimit > 0 && $currentQuarterTotal >= ($currentLimit * 0.8),
-            'limit_remaining_cents' => max(0, $currentLimit - $currentQuarterTotal),
-            'biggest_label' => $biggest['label'] ?? null,
-            'biggest_amount_cents' => $biggest['amount'] ?? 0,
         ];
 
         $params = [
@@ -168,6 +157,8 @@ final class RecordsPageController
             'summaryRows' => $summaryRows,
             'summaryTotal' => $summaryTotal,
             'selectedYear' => $selectedYear,
+            'yearTabs' => $allYears,
+            'suggestedNewYear' => max($allYears) + 1,
             'dashboard' => $dashboard,
         ];
         $this->latte->render($this->viewsDir . '/records/main.latte', $params);

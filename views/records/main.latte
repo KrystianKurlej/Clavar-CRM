@@ -6,6 +6,22 @@
 {include '../partials/nav.latte'}
 
 <main class="container my-3">
+    <section class="bg-body p-3 rounded mb-3 d-flex flex-wrap gap-2 align-items-center justify-content-between">
+        <ul class="nav nav-pills gap-2">
+            {foreach $yearTabs as $year}
+                <li class="nav-item">
+                    <a n:class="'nav-link', $year === $selectedYear ? 'active'" href="/record?year={$year}">{$year}</a>
+                </li>
+            {/foreach}
+        </ul>
+        <form id="createYearForm" class="form d-flex gap-2" method="POST" action="/ax_records" data-refresh="true">
+            <input type="number" class="form-control form-control-sm" name="year" min="2000" max="2100" value="{$suggestedNewYear}" required style="max-width: 120px;" />
+            <input type="hidden" name="action" value="create_year" />
+            <input type="hidden" name="_csrf" value="{csrfToken()}" />
+            <button class="btn btn-outline-primary btn-sm flex-shrink-0" type="submit">Dodaj rok</button>
+        </form>
+    </section>
+
     <div class="row g-3 mb-3">
         <div class="col-12 col-lg-4">
             <section class="bg-body p-3 rounded h-100">
@@ -22,22 +38,12 @@
                                 <td class="text-end"><strong>{$dashboard['ytd_total_cents']|pln} PLN</strong></td>
                             </tr>
                             <tr>
+                                <td class="fw-semibold">Koszt YTD (od styczeń)</td>
+                                <td class="text-end"><strong>{$dashboard['ytd_kup_cents']|pln} PLN</strong></td>
+                            </tr>
+                            <tr>
                                 <td class="fw-semibold">Dni do końca kwartału ({$dashboard['quarter_end_label']})</td>
                                 <td class="text-end"><strong>{$dashboard['days_to_end_quarter']} dni</strong></td>
-                            </tr>
-                            <tr>
-                                <td class="fw-semibold">Średnio dziennie</td>
-                                <td class="text-end"><strong>{$dashboard['avg_per_day_cents']|pln} PLN</strong></td>
-                            </tr>
-                            <tr>
-                                <td class="fw-semibold">Największy klient</td>
-                                <td class="text-end">
-                                    {if $dashboard['biggest_label']}
-                                        <strong>{$dashboard['biggest_label']}: {$dashboard['biggest_amount_cents']|pln} PLN</strong>
-                                    {else}
-                                        <span class="text-muted">Brak danych</span>
-                                    {/if}
-                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -121,14 +127,17 @@
         </div>
 
                 <form id="createRecordForm" class="form row g-2 mb-3" method="POST" action="/ax_records" data-refresh="true">
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-3">
                         <input type="date" class="form-control" name="sale_date" required />
                     </div>
-                    <div class="col-12 col-md-8">
+                    <div class="col-12 col-md-5">
                         <input type="text" class="form-control" name="description" placeholder="Opis usługi/klient" required />
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-2">
                         <input type="text" class="form-control" name="net_amount" placeholder="Kwota netto (PLN)" required />
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <input type="text" class="form-control" name="cost_of_income" placeholder="Koszt (PLN)" />
                     </div>
                     <div class="col-12 col-md-4">
                         <input type="text" class="form-control" name="payment_method" placeholder="Forma płatn." />
@@ -136,7 +145,7 @@
                     <div class="col-12 col-md-4">
                         <input type="text" class="form-control" name="document_no" placeholder="Nr dok." />
                     </div>
-                    <div class="col-12">
+                    <div class="col-12 col-md-4">
                         <input type="text" class="form-control" name="notes" placeholder="Uwagi" />
                     </div>
                     <div class="col-12 d-flex justify-content-end">
@@ -154,6 +163,7 @@
                                 <th>Data</th>
                                 <th>Opis usługi/klient</th>
                                 <th>Kwota netto</th>
+                                <th>Koszt</th>
                                 <th>Forma płatn.</th>
                                 <th>Nr dok.</th>
                                 <th>Kwartał</th>
@@ -170,6 +180,7 @@
                                         data-record-desc="{$item['description']}"
                                         data-record-amount="{$item['net_amount_cents']|pln}"
                                         data-record-amount-raw="{$item['net_amount_cents'] / 100}"
+                                        data-record-kup-raw="{$item['cost_of_income_cents'] / 100}"
                                         data-record-payment="{$item['payment_method']}"
                                         data-record-doc="{$item['document_no']}"
                                         data-record-notes="{$item['notes']}"
@@ -178,6 +189,7 @@
                                         <td>{$item['sale_date']|date_pl}</td>
                                         <td>{$item['description']}</td>
                                         <td>{$item['net_amount_cents']|pln} PLN</td>
+                                        <td>{$item['cost_of_income_cents']|pln} PLN</td>
                                         <td>{$item['payment_method']}</td>
                                         <td>{$item['document_no']}</td>
                                         <td>{$item['quarter_label']}</td>
@@ -204,7 +216,7 @@
                                 {/foreach}
                             {else}
                                 <tr>
-                                    <td class="text-muted text-center" colspan="9">Brak wpisów</td>
+                                    <td class="text-muted text-center" colspan="10">Brak wpisów</td>
                                 </tr>
                             {/if}
                         </tbody>

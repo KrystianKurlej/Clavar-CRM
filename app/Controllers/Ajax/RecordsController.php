@@ -53,12 +53,14 @@ final class RecordsController
                     $date = $this->parseDate((string)($_POST['sale_date'] ?? ''));
                     $desc = trim((string)($_POST['description'] ?? ''));
                     $amountCents = $this->parseCents((string)($_POST['net_amount'] ?? ''));
+                    $costOfIncomeCents = $this->parseCents((string)($_POST['cost_of_income'] ?? ''));
                     if (!$date) { json(['status' => 'error', 'message' => 'Data wymagana'], 422); }
                     if ($desc === '') { json(['status' => 'error', 'message' => 'Opis wymagany'], 422); }
                     $id = $repo->create($this->pdo(), [
                         'sale_date' => $date,
                         'description' => $desc,
                         'net_amount_cents' => $amountCents,
+                        'cost_of_income_cents' => $costOfIncomeCents,
                         'payment_method' => trim((string)($_POST['payment_method'] ?? '')),
                         'document_no' => trim((string)($_POST['document_no'] ?? '')),
                         'notes' => trim((string)($_POST['notes'] ?? '')),
@@ -71,12 +73,14 @@ final class RecordsController
                     $date = $this->parseDate((string)($_POST['sale_date'] ?? ''));
                     $desc = trim((string)($_POST['description'] ?? ''));
                     $amountCents = $this->parseCents((string)($_POST['net_amount'] ?? ''));
+                    $costOfIncomeCents = $this->parseCents((string)($_POST['cost_of_income'] ?? ''));
                     if (!$date) { json(['status' => 'error', 'message' => 'Data wymagana'], 422); }
                     if ($desc === '') { json(['status' => 'error', 'message' => 'Opis wymagany'], 422); }
                     $repo->update($this->pdo(), $id, [
                         'sale_date' => $date,
                         'description' => $desc,
                         'net_amount_cents' => $amountCents,
+                        'cost_of_income_cents' => $costOfIncomeCents,
                         'payment_method' => trim((string)($_POST['payment_method'] ?? '')),
                         'document_no' => trim((string)($_POST['document_no'] ?? '')),
                         'notes' => trim((string)($_POST['notes'] ?? '')),
@@ -98,6 +102,12 @@ final class RecordsController
                         $repo->upsertLimit($pdo, $year, $q, $this->parseCents($raw));
                     }
                     json(['status' => 'success']);
+                    break;
+                case 'create_year':
+                    $year = (int)($_POST['year'] ?? 0);
+                    if ($year < 2000 || $year > 2100) { json(['status' => 'error', 'message' => 'Nieprawidłowy rok'], 422); }
+                    $repo->ensureYear($this->pdo(), $year);
+                    json(['status' => 'success', 'year' => $year]);
                     break;
                 default:
                     json(['status' => 'error', 'message' => 'Unknown action'], 400);

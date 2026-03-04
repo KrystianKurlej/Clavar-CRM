@@ -84,12 +84,24 @@ class DB
                 sale_date TEXT NOT NULL,
                 description TEXT NOT NULL,
                 net_amount_cents INTEGER NOT NULL DEFAULT 0,
+                cost_of_income_cents INTEGER NOT NULL DEFAULT 0,
                 payment_method TEXT,
                 document_no TEXT,
                 notes TEXT,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )'
         );
+        try {
+            $hasCol = false;
+            $stmt = $pdo->query('PRAGMA table_info(sales_records)');
+            $cols = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+            foreach ($cols as $c) { if (($c['name'] ?? '') === 'cost_of_income_cents') { $hasCol = true; break; } }
+            if (!$hasCol) {
+                $pdo->exec('ALTER TABLE sales_records ADD COLUMN cost_of_income_cents INTEGER NOT NULL DEFAULT 0');
+            }
+        } catch (Throwable $e) {
+            // ignore if already exists / alter not available
+        }
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_sales_records_date ON sales_records(sale_date DESC)');
 
         // Quarterly limits for ewidencja

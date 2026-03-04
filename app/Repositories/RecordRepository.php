@@ -6,20 +6,33 @@ final class RecordRepository
 {
     public function listAll(PDO $pdo): array
     {
-        $stmt = $pdo->query('SELECT id, sale_date, description, net_amount_cents, payment_method, document_no, notes, created_at FROM sales_records ORDER BY sale_date DESC, id DESC');
+        $stmt = $pdo->query('SELECT id, sale_date, description, net_amount_cents, cost_of_income_cents, payment_method, document_no, notes, created_at FROM sales_records ORDER BY sale_date DESC, id DESC');
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function listByYear(PDO $pdo, int $year): array
+    {
+        $stmt = $pdo->prepare(
+            'SELECT id, sale_date, description, net_amount_cents, cost_of_income_cents, payment_method, document_no, notes, created_at
+             FROM sales_records
+             WHERE strftime("%Y", sale_date) = :year
+             ORDER BY sale_date DESC, id DESC'
+        );
+        $stmt->execute([':year' => sprintf('%04d', $year)]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
     public function create(PDO $pdo, array $data): int
     {
         $stmt = $pdo->prepare(
-            'INSERT INTO sales_records(sale_date, description, net_amount_cents, payment_method, document_no, notes)
-             VALUES(:sale_date, :description, :net_amount_cents, :payment_method, :document_no, :notes)'
+            'INSERT INTO sales_records(sale_date, description, net_amount_cents, cost_of_income_cents, payment_method, document_no, notes)
+             VALUES(:sale_date, :description, :net_amount_cents, :cost_of_income_cents, :payment_method, :document_no, :notes)'
         );
         $stmt->execute([
             ':sale_date' => $data['sale_date'],
             ':description' => $data['description'],
             ':net_amount_cents' => $data['net_amount_cents'],
+            ':cost_of_income_cents' => $data['cost_of_income_cents'] ?? 0,
             ':payment_method' => $data['payment_method'] ?? null,
             ':document_no' => $data['document_no'] ?? null,
             ':notes' => $data['notes'] ?? null,
@@ -34,6 +47,7 @@ final class RecordRepository
              SET sale_date = :sale_date,
                  description = :description,
                  net_amount_cents = :net_amount_cents,
+                 cost_of_income_cents = :cost_of_income_cents,
                  payment_method = :payment_method,
                  document_no = :document_no,
                  notes = :notes
@@ -43,6 +57,7 @@ final class RecordRepository
             ':sale_date' => $data['sale_date'],
             ':description' => $data['description'],
             ':net_amount_cents' => $data['net_amount_cents'],
+            ':cost_of_income_cents' => $data['cost_of_income_cents'] ?? 0,
             ':payment_method' => $data['payment_method'] ?? null,
             ':document_no' => $data['document_no'] ?? null,
             ':notes' => $data['notes'] ?? null,
@@ -87,5 +102,27 @@ final class RecordRepository
         $stmt = $pdo->query('SELECT MAX(CAST(strftime("%Y", sale_date) AS INTEGER)) FROM sales_records');
         $year = $stmt->fetchColumn();
         return $year ? (int)$year : null;
+    }
+
+    public function availableYears(PDO $pdo): array
+    {
+        $stmt = $pdo->query(
+            'SELECT y FROM (
+                SELECT CAST(strftime("%Y", sale_date) AS INTEGER) AS y FROM sales_records
+                UNION
+                SELECT year AS y FROM record_limits
+            ) years
+            WHERE y IS NOT NULL
+            ORDER BY y DESC'
+        );
+        $rows = $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        return array_map('intval', $rows);
+    }
+
+    public function ensureYear(PDO $pdo, int $year): void
+    {
+        for ($q = 1; $q <= 4; $q++) {
+            $this->upsertLimit($pdo, $year, $q, 0);
+        }
     }
 }
